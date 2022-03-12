@@ -1,0 +1,17 @@
+{
+  "name": "view-element",
+  "version": "1.0.0",
+  "description": "",
+  "main": "build/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "esbuild --bundle src/index.js --outfile=build/index.js",
+    "start": "npm run build -- --servedir=build",
+    "watch": "npm run build -- --watch"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "esbuild": "^0.14.25"
+  }
+}
