@@ -101,13 +101,15 @@ export default class ViewElement extends HTMLElement {
     this.lastScrollPosition = this.scrollTop;
     this.setRowHeightCalculator(() => 0);
 
-    const handleScrollEvent = (e) => {
+    const handleScroll = (e) => {
       console.log('distance', this.scrollTop - this.lastScrollPosition);
       this.lastScrollPosition = this.scrollTop;
       this.calcVisibleRowIndexes();
     };
 
-    this.addEventListener('scroll', () => debounce(handleScrollEvent, 50));
+    const throttledHandleScroll = throttle(handleScroll, 100);
+
+    this.addEventListener('scroll', throttledHandleScroll);
 
     // 1. Get total number of row-elements.
     // 2. Get height of element and save scrollTop position.
@@ -156,9 +158,12 @@ if (!customElements.get('view-element')) {
   customElements.define('view-element', ViewElement)
 }
 
-function debounce(method, delay) {
-  clearTimeout(method._timerId);
-  method._timerId = setTimeout(function () {
-    method();
-  }, delay);
+function throttle(fn, wait) {
+  var time = Date.now();
+  return function () {
+    if ((time + wait - Date.now()) < 0) {
+      fn();
+      time = Date.now();
+    }
+  }
 }
