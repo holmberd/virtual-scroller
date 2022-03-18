@@ -1,5 +1,3 @@
-import EventEmitter from './events';
-
 const template = document.createElement('template');
 const listItemSheet = new CSSStyleSheet();
 listItemSheet.replaceSync(`
@@ -9,7 +7,7 @@ listItemSheet.replaceSync(`
     overflow: scroll;
     overflow-x: hidden;
     border: 1px solid black;
-    height: 400px;
+    height: 390px;
     width: 300px;
   }
 `);
@@ -23,7 +21,7 @@ template.innerHTML = `
 const viewElementItem = 'view-element-item';
 
 const Event = {
-  VISIBLE_ROWS_INDEX_CHANGE: 'visible-rows-index-change',
+  VISIBLE_RANGE_CHANGE: 'visibleRangeChange',
 };
 
 // Element callback fires when it needs new elements to render on scroll.
@@ -35,7 +33,6 @@ export default class ViewElement extends HTMLElement {
     shadowRoot.appendChild(document.importNode(template.content, true));
     shadowRoot.adoptedStyleSheets = [listItemSheet];
 
-    this.events = new EventEmitter();
     this.observer = null;
     this._rowCount = 0;
     this.getRowHeight = null;
@@ -52,49 +49,88 @@ export default class ViewElement extends HTMLElement {
     return this._rowCount;
   }
 
-  calcRowsHeight(startIndex, stopIndex) {
-    let rowsHeight = 0;
-    for (let rowIndex = startIndex; rowIndex < stopIndex; rowIndex++) {
-      rowsHeight += this.getRowHeight(rowIndex)
-    }
-    return rowsHeight;
-  }
-
   setRowHeightCalculator(fn) {
     this.getRowHeight = fn;
     this.renderRows();
   }
 
+  calcRowsHeight(startIndex, stopIndex) {
+    let rowsHeight = 0;
+    for (let rowIndex = startIndex; rowIndex <= stopIndex; rowIndex++) {
+      rowsHeight += this.getRowHeight(rowIndex)
+    }
+    return rowsHeight;
+  }
+
   renderRows() {
     const [startIndex, stopIndex] = this.calcVisibleRowIndexes();
     const belowVisibleRowsHeight = this.calcRowsHeight(stopIndex, this.rowCount - 1);
-    const bottomOverflowElement = this.shadowRoot.querySelector('#bottom-overflow');
-    bottomOverflowElement.style.height = `${belowVisibleRowsHeight}px`;
+    this.setBottomOverflowHeight(belowVisibleRowsHeight);
+    this.dispatchEvent(
+      new CustomEvent(Event.VISIBLE_RANGE_CHANGE, {
+        detail: {
+          startIndex,
+          stopIndex,
+        },
+        bubbles: true,
+      })
+    );
   }
 
-  onVisibleRowIndexesChange(callback) {
-    this.events.on(Event.VISIBLE_ROWS_INDEX_CHANGE, callback);
+  setBottomOverflowHeight(height) {
+    const bottomOverflowElement = this.shadowRoot.querySelector('#bottom-overflow');
+    bottomOverflowElement.style.height = `${height}px`;
   }
 
   calcVisibleRowIndexes() {
     this.visibleRowsStartIndex = this.visibleRowsStopIndex;
 
     let totalRowHeight = 0;
-    let rowCounter = this.rowCount;
     let stopIndex = 0;
-    while (rowCounter !== 0 && totalRowHeight < this.clientHeight) {
+    const clientHeight = this.clientHeight;
+    for (let rowCounter = this.rowCount; rowCounter > 0; rowCounter--) {
       totalRowHeight += this.getRowHeight(stopIndex);
+      if (totalRowHeight > clientHeight) {
+        break;
+      }
       stopIndex++;
-      rowCounter--;
+
+      if (stopIndex > 20) {
+        break;
+      }
     }
+
     this.visibleRowsStopIndex = stopIndex;
 
-    this.events.emit(
-      Event.VISIBLE_ROWS_INDEX_CHANGE,
+    // this.events.emit(
+    //   Event.VISIBLE_ROWS_INDEX_CHANGE,
+    //   this.visibleRowsStartIndex,
+    //   this.visibleRowsStopIndex
+    // );
+    return [this.visibleRowsStartIndex, this.visibleRowsStopIndex];
+  }
+
+  calcScrollThresholds() {
+    // Scroll at top case.
+    if (!this.scrollTop) {
+      const visibleRowsHeight = this.calcRowsHeight(
+        this.visibleRowsStartIndex,
+        this.visibleRowsStopIndex
+      );
+      return [0, visibleRowsHeight - this.clientHeight]; // TODO: store clientHeight.
+    }
+
+    const aboveVisibleRowsHeight = this.calcRowsHeight(0, this.visibleRowsStartIndex - 1);
+    const visibleRowsTopOffset = this.scrollTop - aboveVisibleRowsHeight;
+
+    const visibleRowsHeight = this.calcRowsHeight(
       this.visibleRowsStartIndex,
       this.visibleRowsStopIndex
     );
-    return [this.visibleRowsStartIndex, this.visibleRowsStopIndex];
+
+    const visibleRowsBottomOffset = visibleRowsHeight - this.clientHeight - visibleRowsTopOffset;
+
+    return [visibleRowsTopOffset, visibleRowsBottomOffset];
   }
 
   connectedCallback() {
@@ -102,9 +138,11 @@ export default class ViewElement extends HTMLElement {
     this.setRowHeightCalculator(() => 0);
 
     const handleScroll = (e) => {
-      console.log('distance', this.scrollTop - this.lastScrollPosition);
+      // console.log('distance', this.scrollTop - this.lastScrollPosition);
       this.lastScrollPosition = this.scrollTop;
-      this.calcVisibleRowIndexes();
+      const scrollThresholds = this.calcScrollThresholds()
+      console.log('scrollThresholds', scrollThresholds);
+      // this.calcVisibleRowIndexes();
     };
 
     const throttledHandleScroll = throttle(handleScroll, 100);
