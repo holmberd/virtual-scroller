@@ -33,6 +33,9 @@ export default class ViewElement extends HTMLElement {
     shadowRoot.appendChild(document.importNode(template.content, true));
     shadowRoot.adoptedStyleSheets = [listItemSheet];
 
+    this.visibleElementsMap = new WeakMap();
+    this.rowFactory = null;
+
     this.visibleRowsOffset = 1;
     this.observer = null;
     this._rowCount = 0;
@@ -50,9 +53,13 @@ export default class ViewElement extends HTMLElement {
     return this._rowCount;
   }
 
+  // Provider?
   setRowHeightCalculator(fn) {
     this.getRowHeight = fn;
-    this.renderRows();
+  }
+
+  setRowFactory(fn) {
+    this.rowFactory = fn;
   }
 
   calcRowsHeight(startIndex, stopIndex) {
@@ -82,10 +89,23 @@ export default class ViewElement extends HTMLElement {
     );
   }
 
-  renderRows() {
+  render() {
     const [startIndex, stopIndex] = this.calcVisibleRowIndexes();
     const belowVisibleRowsHeight = this.calcRowsHeight(stopIndex, this.rowCount - 1);
     this.setBottomOverflowHeight(belowVisibleRowsHeight);
+
+    let fragment = document.createDocumentFragment();
+    for (let i = startIndex; i <= stopIndex; i++) {
+      const rowElement = this.rowFactory(i);
+      this.visibleElementsMap.set(rowElement, i);
+      fragment.appendChild(rowElement);
+    }
+
+    this.appendChild(fragment);
+    fragment = null;
+
+    console.log(this.visibleElementsMap);
+
     this.updateVisibleRowIndexes(startIndex, stopIndex);
   }
 
@@ -171,16 +191,18 @@ export default class ViewElement extends HTMLElement {
       if (isDown) {
         // Remove row top.
         if (topThreshold > this.getRowHeight(this.visibleRowsStartIndex)) {
+          console.log('remove top row');
           const topOverflowHeight = this.getTopOverflowHeight();
           const removedRowHeight = this.getRowHeight(this.visibleRowsStartIndex);
-          this.setTopOverflowHeight(topOverflowHeight + removedRowHeight);
           const firstRowElement = this.firstElementChild
+          this.setTopOverflowHeight(topOverflowHeight + removedRowHeight);
           firstRowElement && firstRowElement.remove();
           this.updateVisibleRowIndexes(this.visibleRowsStartIndex + 1, this.visibleRowsStopIndex);
         }
 
         // Add row bottom.
         if (bottomThreshold < 0) {
+          console.log('add bottom row');
           const bottomOverflowHeight = this.getBottomOverflowHeight();
           const addedRowHeight = this.getRowHeight(this.visibleRowsStopIndex + 1);
           this.setBottomOverflowHeight(bottomOverflowHeight - addedRowHeight);
@@ -188,19 +210,23 @@ export default class ViewElement extends HTMLElement {
         }
       } else {
         // Add row top.
-        if (topThreshold < 0) {
+        if (topThreshold < 0 && this.visibleRowsStartIndex !== 0) {
+          console.log('add top row');
           const topOverflowHeight = this.getTopOverflowHeight();
-          const addedRowHeight = this.getRowHeight(this.visibleRowsStartIndex + 1);
+          const addedRowHeight = this.getRowHeight(this.visibleRowsStartIndex - 1);
           this.setTopOverflowHeight(topOverflowHeight - addedRowHeight);
           this.updateVisibleRowIndexes(this.visibleRowsStartIndex - 1, this.visibleRowsStopIndex);
         }
 
         // Remove row bottom.
         if (bottomThreshold > this.getRowHeight(this.visibleRowsStartIndex)) {
-          const topOverflowHeight = this.getTopOverflowHeight();
+          console.log('remove bottom row');
+          const bottomOverflowHeight = this.getBottomOverflowHeight();
           const removedRowHeight = this.getRowHeight(this.visibleRowsStopIndex);
-          this.setTopOverflowHeight(topOverflowHeight + removedRowHeight);
-          // this.updateVisibleRowIndexes(this.visibleRowsStartIndex, this.visibleRowsStopIndex + 1);
+          const lastRowElement = this.lastElementChild;
+          this.setBottomOverflowHeight(bottomOverflowHeight + removedRowHeight);
+          lastRowElement && lastRowElement.remove();
+          this.updateVisibleRowIndexes(this.visibleRowsStartIndex, this.visibleRowsStopIndex - 1);
         }
 
       }
@@ -208,7 +234,7 @@ export default class ViewElement extends HTMLElement {
       // console.log('distance', this.scrollTop - this.lastScrollPosition);
       this.lastScrollPosition = this.scrollTop;
 
-      console.log('scrollThresholds', bottomThreshold);
+      console.log('scrollThresholds', topThreshold, bottomThreshold);
       // this.calcVisibleRowIndexes();
     };
 
