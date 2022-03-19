@@ -94,6 +94,14 @@ export default class ViewElement extends HTMLElement {
     const belowVisibleRowsHeight = this.calcRowsHeight(stopIndex, this.rowCount - 1);
     this.setBottomOverflowHeight(belowVisibleRowsHeight);
 
+    this.renderRows(startIndex, stopIndex);
+
+    // console.log(this.visibleElementsMap);
+
+    this.updateVisibleRowIndexes(startIndex, stopIndex);
+  }
+
+  renderRows(startIndex, stopIndex) {
     let fragment = document.createDocumentFragment();
     for (let i = startIndex; i <= stopIndex; i++) {
       const rowElement = this.rowFactory(i);
@@ -103,10 +111,6 @@ export default class ViewElement extends HTMLElement {
 
     this.appendChild(fragment);
     fragment = null;
-
-    console.log(this.visibleElementsMap);
-
-    this.updateVisibleRowIndexes(startIndex, stopIndex);
   }
 
   setBottomOverflowHeight(height) {
@@ -177,7 +181,41 @@ export default class ViewElement extends HTMLElement {
 
     const visibleRowsBottomOffset = visibleRowsHeight - this.clientHeight - visibleRowsTopOffset;
 
-    return [visibleRowsTopOffset, visibleRowsBottomOffset];
+    return [Math.abs(visibleRowsTopOffset), Math.abs(visibleRowsBottomOffset)];
+  }
+
+  // removeTopRowsWithinHeight(height) {
+  //   const removedCount = 0;
+  //   const removedRowHeight = this.getRowHeight(this.visibleRowsStartIndex);
+  //   for (
+  //     let index = this.visibleRowsStartIndex,
+  //     totalRowsHeight = 0;
+  //     totalRowsHeight <= height;
+  //     index++
+  //   ) {
+  //     totalRowsHeight += this.getRowHeight(index);
+  //     if (totalRowsHeight)
+  //   }
+  // }
+
+  addBottomRowsWithinHeight(height) {
+    let stopIndex = this.visibleRowsStopIndex + 1;
+    let totalRowsHeight = 0;
+
+    for (let i = this.visibleRowsStopIndex + 1; i < this.rowCount; i++) {
+      totalRowsHeight += this.getRowHeight(i);
+      if (totalRowsHeight > height) {
+        stopIndex = i;
+        break;
+      }
+    }
+
+    console.log('stopIndex', this.visibleRowsStopIndex + 1, stopIndex);
+
+    this.setBottomOverflowHeight(this.getBottomOverflowHeight() - totalRowsHeight);
+
+    this.renderRows(this.visibleRowsStopIndex + 1, stopIndex);
+    return (stopIndex - (this.visibleRowsStopIndex + 1)) + 1;
   }
 
   connectedCallback() {
@@ -185,41 +223,64 @@ export default class ViewElement extends HTMLElement {
     this.setRowHeightCalculator(() => 0);
 
     const handleScroll = (e) => {
-      const isDown = this.scrollTop - this.lastScrollPosition > 0;
+      const scrollDistance = this.scrollTop - this.lastScrollPosition;
+      const abstScrollDistance = Math.abs(scrollDistance);
+      const isDown = scrollDistance > 0;
       const [topThreshold, bottomThreshold] = this.calcScrollThresholds();
 
       if (isDown) {
-        // Remove row top.
+        if (abstScrollDistance > bottomThreshold) {
+          // Add bottom rows.
+          const addedRowsCount = this.addBottomRowsWithinHeight(abstScrollDistance - bottomThreshold);
+          this.updateVisibleRowIndexes(this.visibleRowsStartIndex, this.visibleRowsStopIndex + addedRowsCount);
+        }
+        if (abstScrollDistance > topThreshold) {
+          // Remove top rows.
+          const removedRowsCount = this.removeBottomRowsWithinHeight(abstScrollDistance - topThreshold);
+          this.updateVisibleRowIndexes(this.visibleRowsStartIndex + removedRowsCount, this.visibleRowsStopIndex);
+        }
+
+      }
+
+      if (isDown) {
         if (topThreshold > this.getRowHeight(this.visibleRowsStartIndex)) {
+          // Remove row top.
           console.log('remove top row');
           const topOverflowHeight = this.getTopOverflowHeight();
           const removedRowHeight = this.getRowHeight(this.visibleRowsStartIndex);
+
           const firstRowElement = this.firstElementChild
           this.setTopOverflowHeight(topOverflowHeight + removedRowHeight);
           firstRowElement && firstRowElement.remove();
-          this.updateVisibleRowIndexes(this.visibleRowsStartIndex + 1, this.visibleRowsStopIndex);
-        }
 
-        // Add row bottom.
-        if (bottomThreshold < 0) {
+          this.updateVisibleRowIndexes(this.visibleRowsStartIndex + 1, this.visibleRowsStopIndex);
+        } else if (bottomThreshold < 0) {
+          // Add row bottom.
           console.log('add bottom row');
-          const bottomOverflowHeight = this.getBottomOverflowHeight();
-          const addedRowHeight = this.getRowHeight(this.visibleRowsStopIndex + 1);
-          this.setBottomOverflowHeight(bottomOverflowHeight - addedRowHeight);
-          this.updateVisibleRowIndexes(this.visibleRowsStartIndex, this.visibleRowsStopIndex + 1);
+          // const bottomOverflowHeight = this.getBottomOverflowHeight();
+          // const addedRowHeight = this.getRowHeight(this.visibleRowsStopIndex + 1);
+          // this.setBottomOverflowHeight(bottomOverflowHeight - addedRowHeight);
+
+          // const newRow = this.rowFactory(this.visibleRowsStopIndex + 1);
+          // this.appendChild(newRow);
+          const addedRowsCount = this.addBottomRowsWithinHeight(Math.abs(scrollDistance));
+          console.log('added', addedRowsCount);
+          this.updateVisibleRowIndexes(this.visibleRowsStartIndex, this.visibleRowsStopIndex + addedRowsCount);
         }
       } else {
-        // Add row top.
-        if (topThreshold < 0 && this.visibleRowsStartIndex !== 0) {
+        if (topThreshold < 0) {
+          // Add row top.
           console.log('add top row');
           const topOverflowHeight = this.getTopOverflowHeight();
           const addedRowHeight = this.getRowHeight(this.visibleRowsStartIndex - 1);
           this.setTopOverflowHeight(topOverflowHeight - addedRowHeight);
-          this.updateVisibleRowIndexes(this.visibleRowsStartIndex - 1, this.visibleRowsStopIndex);
-        }
 
-        // Remove row bottom.
-        if (bottomThreshold > this.getRowHeight(this.visibleRowsStartIndex)) {
+          const newRow = this.rowFactory(this.visibleRowsStartIndex - 1);
+          this.prepend(newRow);
+
+          this.updateVisibleRowIndexes(this.visibleRowsStartIndex - 1, this.visibleRowsStopIndex);
+        } else if (bottomThreshold > this.getRowHeight(this.visibleRowsStartIndex)) {
+          // Remove row bottom.
           console.log('remove bottom row');
           const bottomOverflowHeight = this.getBottomOverflowHeight();
           const removedRowHeight = this.getRowHeight(this.visibleRowsStopIndex);
@@ -228,17 +289,16 @@ export default class ViewElement extends HTMLElement {
           lastRowElement && lastRowElement.remove();
           this.updateVisibleRowIndexes(this.visibleRowsStartIndex, this.visibleRowsStopIndex - 1);
         }
-
       }
 
       // console.log('distance', this.scrollTop - this.lastScrollPosition);
       this.lastScrollPosition = this.scrollTop;
 
-      console.log('scrollThresholds', topThreshold, bottomThreshold);
+      // console.log('scrollThresholds', topThreshold, bottomThreshold);
       // this.calcVisibleRowIndexes();
     };
 
-    const throttledHandleScroll = throttle(handleScroll, 100);
+    const throttledHandleScroll = throttle(handleScroll, 20);
 
     this.addEventListener('scroll', throttledHandleScroll);
 
