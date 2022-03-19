@@ -113,6 +113,8 @@ export default class ViewElement extends HTMLElement {
     const clientHeight = this.clientHeight;
     const scrollTop = this.scrollTop;
 
+
+    // TODO: Replace with binary search (optimization).
     let startIndex = 0;
     for (let totalHeight = 0; startIndex < this.rowCount; startIndex++) {
       totalHeight += this.getRowHeight(startIndex);
