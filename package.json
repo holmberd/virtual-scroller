@@ -13,5 +13,8 @@
   "license": "ISC",
   "devDependencies": {
     "esbuild": "^0.14.25"
+  },
+  "dependencies": {
+    "lit-html": "^2.2.1"
   }
 }
