@@ -236,18 +236,23 @@ export default class ViewElement extends HTMLElement {
     const handleScroll = (e) => {
       const scrollDistance = this.scrollTop - this.lastScrollPosition;
       const abstScrollDistance = Math.abs(scrollDistance);
-      const isDownScroll = scrollDistance > 0;
-      const [topThreshold, bottomThreshold] = this.calcScrollThresholds();
+      const isScrollDirectionDown = scrollDistance > 0;
 
-      if (isDownScroll) {
-        if (abstScrollDistance > bottomThreshold) {
-          // Add bottom rows.
-          const addedRowsCount = this.addBottomRowsWithinHeight(abstScrollDistance - bottomThreshold);
+      if (isScrollDirectionDown) {
+        const [topThreshold, bottomThreshold] = this.calcScrollThresholds(ScrollDir.DOWN);
+        console.log('thresholds', topThreshold, bottomThreshold);
+
+        // Add bottom rows.
+        if (bottomThreshold < 0) {
+          // const addedRowsCount = this.addBottomRowsWithinHeight(abstScrollDistance - bottomThreshold);
+          const addedRowsCount = this.calcRowsToAdd(abstScrollDistance - bottomThreshold);
           this.updateVisibleRowIndexes(this.visibleRowsStartIndex, this.visibleRowsStopIndex + addedRowsCount);
         }
-        if (abstScrollDistance > topThreshold) {
-          // Remove top rows.
-          const removedRowsCount = this.removeTopRowsWithinHeight(abstScrollDistance - topThreshold);
+
+        // Remove top rows.
+        if (topThreshold < 0) {
+          //const removedRowsCount = this.removeTopRowsWithinHeight(abstScrollDistance - topThreshold);
+          const removedRowsCount = this.calcRowsToRemove(abstScrollDistance - topThreshold);
           this.updateVisibleRowIndexes(this.visibleRowsStartIndex + removedRowsCount, this.visibleRowsStopIndex);
         }
 

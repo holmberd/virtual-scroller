@@ -1,3 +1,4 @@
+import { html } from 'lit-html';
 export { default } from './view-element';
 
 // const testButton = document.querySelector('#test-button');
