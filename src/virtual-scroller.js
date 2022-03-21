@@ -18,8 +18,6 @@ template.innerHTML = `
   <div id='bottom-overflow'></div>
 `;
 
-const viewElementItem = 'view-element-item';
-
 const Event = {
   VISIBLE_RANGE_CHANGE: 'visibleRangeChange',
 };
@@ -31,7 +29,7 @@ const ScrollDir = {
 
 // Element callback fires when it needs new elements to render on scroll.
 
-export default class ViewElement extends HTMLElement {
+export default class VirtualScroller extends HTMLElement {
   constructor() {
     super();
     const shadowRoot = this.attachShadow({ mode: 'open' });
@@ -41,7 +39,7 @@ export default class ViewElement extends HTMLElement {
     this.visibleElementsMap = new WeakMap();
     this.rowFactory = null;
 
-    this.visibleRowsOffset = 1;
+    this.visibleRowsOffset = 3;
     this.observer = null;
     this._rowCount = 0;
     this.getRowHeight = null;
@@ -61,18 +59,40 @@ export default class ViewElement extends HTMLElement {
   // Provider?
   setRowHeightCalculator(fn) {
     this.getRowHeight = fn;
+    const [startIndex, stopIndex] = this.calcVisibleRowIndexes();
+    this.updateVisibleRowIndexes(startIndex, stopIndex);
   }
 
   setRowFactory(fn) {
     this.rowFactory = fn;
   }
 
-  calcRowsHeight(startIndex, stopIndex) {
-    let rowsHeight = 0;
-    for (let rowIndex = startIndex; rowIndex <= stopIndex; rowIndex++) {
-      rowsHeight += this.getRowHeight(rowIndex)
+  calcVisibleRowIndexes() {
+    const clientHeight = this.clientHeight;
+    const scrollTop = this.scrollTop;
+
+
+    // TODO: Optimize...
+    let startIndex = 0;
+    for (let totalHeight = 0; startIndex < this.rowCount; startIndex++) {
+      totalHeight += this.getRowHeight(startIndex);
+      if (totalHeight > scrollTop) {
+        break;
+      }
     }
-    return rowsHeight;
+
+    let stopIndex = startIndex;
+    for (let totalHeight = 0; stopIndex < this.rowCount; stopIndex++) {
+      totalHeight += this.getRowHeight(stopIndex);
+      if (totalHeight > clientHeight) {
+        break;
+      }
+    }
+
+    return [
+      startIndex,
+      stopIndex,
+    ];
   }
 
   updateVisibleRowIndexes(startIndex, stopIndex) {
@@ -83,15 +103,40 @@ export default class ViewElement extends HTMLElement {
     this.visibleRowsStartIndex = startIndex;
     this.visibleRowsStopIndex = stopIndex;
 
+    const offsetStartIndex = startIndex === 0
+      ? 0 : startIndex - this.visibleRowsOffset >= 0
+      ? startIndex - this.visibleRowsOffset : 0 ;
+    const offsetStopIndex = stopIndex === 0
+      ? 0 : stopIndex + this.visibleRowsOffset < this.rowCount
+      ? stopIndex + this.visibleRowsOffset : this.rowCount;
+
+    const [topOverflowHeight, bottomOverflowHeight] = this.calcOverflow(offsetStartIndex, offsetStopIndex);
+    this.setTopOverflowHeight(topOverflowHeight);
+    this.setBottomOverflowHeight(bottomOverflowHeight);
+
     this.dispatchEvent(
       new CustomEvent(Event.VISIBLE_RANGE_CHANGE, {
         detail: {
-          startIndex: startIndex === 0 ? 0 : startIndex - this.visibleRowsOffset,
-          stopIndex: stopIndex === 0 ? 0 : stopIndex + this.visibleRowsOffset,
+          startIndex: offsetStartIndex,
+          stopIndex: offsetStopIndex,
         },
         bubbles: true,
       })
     );
+  }
+
+  calcOverflow(startIndex, stopIndex) {
+    const aboveVisibleRowsHeight = this.calcRowsHeight(0, startIndex);
+    const belowVisibleRowsHeight = this.calcRowsHeight(stopIndex + 1, this.rowCount);
+    return [aboveVisibleRowsHeight, belowVisibleRowsHeight];
+  }
+
+  calcRowsHeight(startIndex, stopIndex) {
+    let rowsHeight = 0;
+    for (let rowIndex = startIndex; rowIndex < stopIndex; rowIndex++) {
+      rowsHeight += this.getRowHeight(rowIndex)
+    }
+    return rowsHeight;
   }
 
   render() {
@@ -100,8 +145,6 @@ export default class ViewElement extends HTMLElement {
     this.setBottomOverflowHeight(belowVisibleRowsHeight);
 
     this.renderRows(startIndex, stopIndex);
-
-    // console.log(this.visibleElementsMap);
 
     this.updateVisibleRowIndexes(startIndex, stopIndex);
   }
@@ -136,34 +179,6 @@ export default class ViewElement extends HTMLElement {
   getTopOverflowHeight() {
     const topOverflowElement = this.shadowRoot.querySelector('#top-overflow');
     return Number(topOverflowElement.style.height.replace('px', '')) ?? 0;
-  }
-
-  calcVisibleRowIndexes() {
-    const clientHeight = this.clientHeight;
-    const scrollTop = this.scrollTop;
-
-
-    // TODO: Replace with binary search (optimization).
-    let startIndex = 0;
-    for (let totalHeight = 0; startIndex < this.rowCount; startIndex++) {
-      totalHeight += this.getRowHeight(startIndex);
-      if (totalHeight > scrollTop) {
-        break;
-      }
-    }
-
-    let stopIndex = startIndex;
-    for (let totalHeight = 0; stopIndex < this.rowCount; stopIndex++) {
-      totalHeight += this.getRowHeight(stopIndex);
-      if (totalHeight > clientHeight) {
-        break;
-      }
-    }
-
-    return [
-      startIndex,
-      stopIndex,
-    ];
   }
 
   // Returns thresholds for scrolldistance required to
@@ -225,9 +240,40 @@ export default class ViewElement extends HTMLElement {
     return (stopIndex - (this.visibleRowsStopIndex + 1)) + 1;
   }
 
-  removeTopRowsWithinHeight(height) {
+  calcBottomRowsToAdd(height) {
+    let startIndex = this.visibleRowsStopIndex + 1;
+    let stopIndex = startIndex;
+    let totalRowsHeight = 0;
 
+    for (let i = startIndex; i < this.rowCount; i++) {
+      totalRowsHeight += this.getRowHeight(i);
+      rowIndexes.push(i);
+      if (totalRowsHeight > height) {
+        stopIndex = i;
+        break;
+      }
+    }
+
+    return {
+      range: [startIndex, stopIndex],
+      totalHeight: totalRowsHeight,
+      count: (stopIndex - (this.visibleRowsStopIndex + 1)) + 1,
+    };
   }
+
+  // calcTopRowsToRemove(height) {
+  //   let stopIndex = this.visibleRowsStartIndex - 1;
+  //   let
+  //   let totalRowsHeight = 0;
+
+  //   for (let i = this.visibleRowsStartIndex - 1; i >= 0; i--) {
+  //     totalRowsHeight += this.getRowHeight(i);
+  //     if (totalRowsHeight > height) {
+
+  //     }
+  //   }
+  // }
+
 
   connectedCallback() {
     this.lastScrollPosition = this.scrollTop;
@@ -240,22 +286,32 @@ export default class ViewElement extends HTMLElement {
 
       if (isScrollDirectionDown) {
         const [topThreshold, bottomThreshold] = this.calcScrollThresholds(ScrollDir.DOWN);
-        console.log('thresholds', topThreshold, bottomThreshold);
+        // console.log('thresholds', topThreshold, bottomThreshold);
 
         // Add bottom rows.
         if (bottomThreshold < 0) {
-          // const addedRowsCount = this.addBottomRowsWithinHeight(abstScrollDistance - bottomThreshold);
-          const addedRowsCount = this.calcRowsToAdd(abstScrollDistance - bottomThreshold);
-          this.updateVisibleRowIndexes(this.visibleRowsStartIndex, this.visibleRowsStopIndex + addedRowsCount);
+          // const { count, totalHeight } = this.calcBottomRowsToAdd(Math.abs(bottomThreshold));
+          // this.updateVisibleRowIndexes(this.visibleRowsStartIndex, this.visibleRowsStopIndex + count);
+          // this.setBottomOverflowHeight(this.getBottomOverflowHeight() - totalHeight);
+
+          const [startIndex, stopIndex] = this.calcVisibleRowIndexes();
+          this.updateVisibleRowIndexes(startIndex, stopIndex);
         }
 
         // Remove top rows.
         if (topThreshold < 0) {
-          //const removedRowsCount = this.removeTopRowsWithinHeight(abstScrollDistance - topThreshold);
-          const removedRowsCount = this.calcRowsToRemove(abstScrollDistance - topThreshold);
-          this.updateVisibleRowIndexes(this.visibleRowsStartIndex + removedRowsCount, this.visibleRowsStopIndex);
-        }
+          // const removedRowsCount = this.calcTopRowsToRemove(Math.abs(topThreshold));
+          // this.updateVisibleRowIndexes(this.visibleRowsStartIndex + removedRowsCount, this.visibleRowsStopIndex);
 
+          const [startIndex, stopIndex] = this.calcVisibleRowIndexes();
+          this.updateVisibleRowIndexes(startIndex, stopIndex);
+        }
+      } else {
+        const [topThreshold, bottomThreshold] = this.calcScrollThresholds(ScrollDir.UP);
+        if (bottomThreshold < 0 || topThreshold < 0) {
+          const [startIndex, stopIndex] = this.calcVisibleRowIndexes();
+          this.updateVisibleRowIndexes(startIndex, stopIndex);
+        }
       }
 
       // if (isDown) {
@@ -314,9 +370,9 @@ export default class ViewElement extends HTMLElement {
       // this.calcVisibleRowIndexes();
     };
 
-    const throttledHandleScroll = throttle(handleScroll, 20);
+    const throttledHandleScroll = throttle(handleScroll, 5);
 
-    this.addEventListener('scroll', throttledHandleScroll);
+    this.addEventListener('scroll', handleScroll);
 
     // React: the index recieved in from onRenderRows() updates state which cause
     // react to render rows inside the view-element(list).
@@ -350,8 +406,8 @@ export default class ViewElement extends HTMLElement {
   }
 }
 
-if (!customElements.get('view-element')) {
-  customElements.define('view-element', ViewElement)
+if (!customElements.get('virtual-scroller')) {
+  customElements.define('virtual-scroller', VirtualScroller)
 }
 
 function throttle(fn, wait) {

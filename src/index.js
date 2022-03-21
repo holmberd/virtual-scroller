@@ -1,21 +1,37 @@
-import { html } from 'lit-html';
-export { default } from './view-element';
+import { html, render } from 'lit-html';
+import { repeat } from 'lit-html/directives/repeat.js';
+
+export { default } from './virtual-scroller';
 
 // const testButton = document.querySelector('#test-button');
-const viewElement = document.querySelector('view-element');
+const virtualScroller = document.querySelector('virtual-scroller');
 
-viewElement.rowCount = 1000;
-viewElement.setRowHeightCalculator((index) => 60);
+const items = Array(10000).fill(true).map((_, index) => ({ id: index }));
 
-viewElement.setRowFactory((index) => {
-  const rowDiv = document.createElement('div');
-  rowDiv.classList = 'row';
-  rowDiv.id = index;
-  rowDiv.textContent = `row-${index}`;
-  return rowDiv;
-})
+const itemList = (items) => html`
+  ${repeat(items, (item) => item.id, (item, index) => html`
+    <div class='row'>${item.id}</div>
+  `)}
+`;
 
-viewElement.render();
+virtualScroller.addEventListener('visibleRangeChange', ({ detail: { startIndex, stopIndex } }) => {
+  console.log('visibleRangeChange', startIndex, stopIndex);
+  const visibleItemList = itemList(items.slice(startIndex, stopIndex + 1));
+  render(visibleItemList, virtualScroller);
+});
+
+virtualScroller.rowCount = items.length;
+virtualScroller.setRowHeightCalculator((index) => 60);
+
+// viewElement.setRowFactory((index) => {
+//   const rowDiv = document.createElement('div');
+//   rowDiv.classList = 'row';
+//   rowDiv.id = index;
+//   rowDiv.textContent = `row-${index}`;
+//   return rowDiv;
+// });
+
+// viewElement.render();
 
 //let prevRange = [0, 0];
 
