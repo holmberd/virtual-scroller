@@ -15,13 +15,13 @@ const itemList = (items) => html`
 `;
 
 virtualScroller.addEventListener('visibleRangeChange', ({ detail: { startIndex, stopIndex } }) => {
-  console.log('visibleRangeChange', startIndex, stopIndex);
+  // console.log('visibleRangeChange', startIndex, stopIndex);
   const visibleItemList = itemList(items.slice(startIndex, stopIndex + 1));
   render(visibleItemList, virtualScroller);
 });
 
 virtualScroller.rowCount = items.length;
-virtualScroller.setRowHeightCalculator((index) => 60);
+virtualScroller.setRowHeightCalculator((index) => 20);
 
 // viewElement.setRowFactory((index) => {
 //   const rowDiv = document.createElement('div');
