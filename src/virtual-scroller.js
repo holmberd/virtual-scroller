@@ -7,7 +7,7 @@ listItemSheet.replaceSync(`
     overflow: scroll;
     overflow-x: hidden;
     border: 1px solid black;
-    height: 390px;
+    height: 150px;
     width: 300px;
   }
 `);
@@ -36,61 +36,44 @@ export default class VirtualScroller extends HTMLElement {
     shadowRoot.appendChild(document.importNode(template.content, true));
     shadowRoot.adoptedStyleSheets = [listItemSheet];
 
-    this.rowFactory = null;
-    this.getRowHeight = null;
-
-    this._clientHeightCache = 0;
-
-    this.visibleRowsOffset = 3;
+    this.getItemHeight = () => 0;
+    this.visibleOffset = 3;
     this.observer = null;
-    this._rowCount = 0;
-
     this.lastScrollPosition = 0;
-    this.visibleRowsStartIndex = 0;
-    this.visibleRowsStopIndex = 0;
+    this.visibleStartIndex = 0;
+    this.visibleStopIndex = 0;
+    this.clientHeightCache = 0;
+    this._itemCount = 0;
   }
 
-  set rowCount(rows) {
-    this._rowCount = rows;
+  // TODO: Update visible indexes when updated.
+  set itemCount(items) {
+    this._itemCount = items;
   }
 
-  get rowCount() {
-    return this._rowCount;
+  get itemCount() {
+    return this._itemCount;
   }
 
-  set clientHeightCache(value) {
-    this._clientHeightCache = value;
-    this.halfClientHeight = Math.floor(value / 2);
+  init(fn) {
+    this.getItemHeight = fn;
+    const [startIndex, stopIndex] = this.calcVisibleItems();
+    this.updateVisibleItemIndexes(startIndex, stopIndex);
   }
 
-  get clientHeightCache() {
-    return this._clientHeightCache;
-  }
-
-  // Provider?
-  setRowHeightCalculator(fn) {
-    this.getRowHeight = fn;
-    const [startIndex, stopIndex] = this.calcVisibleRowIndexes();
-    this.updateVisibleRowIndexes(startIndex, stopIndex);
-  }
-
-  setRowFactory(fn) {
-    this.rowFactory = fn;
-  }
-
-  calcVisibleRowIndexes(scrollTop = this.scrollTop) {
+  calcVisibleItems(scrollTop = this.scrollTop) {
     // TODO: Optimize...
     let startIndex = 0;
-    for (let totalHeight = 0; startIndex < this.rowCount; startIndex++) {
-      totalHeight += this.getRowHeight(startIndex);
+    for (let totalHeight = 0; startIndex < this.itemCount; startIndex++) {
+      totalHeight += this.getItemHeight(startIndex);
       if (totalHeight > scrollTop) {
         break;
       }
     }
 
     let stopIndex = startIndex;
-    for (let totalHeight = 0; stopIndex < this.rowCount; stopIndex++) {
-      totalHeight += this.getRowHeight(stopIndex);
+    for (let totalHeight = 0; stopIndex < this.itemCount; stopIndex++) {
+      totalHeight += this.getItemHeight(stopIndex);
       if (totalHeight > this.clientHeightCache) {
         break;
       }
@@ -102,20 +85,20 @@ export default class VirtualScroller extends HTMLElement {
     ];
   }
 
-  updateVisibleRowIndexes(startIndex, stopIndex) {
-    if (this.visibleRowsStartIndex === startIndex && this.visibleRowsStopIndex === stopIndex) {
+  updateVisibleItemIndexes(startIndex, stopIndex) {
+    if (this.visibleStartIndex === startIndex && this.visibleStopIndex === stopIndex) {
       return;
     }
 
-    this.visibleRowsStartIndex = startIndex;
-    this.visibleRowsStopIndex = stopIndex;
+    this.visibleStartIndex = startIndex;
+    this.visibleStopIndex = stopIndex;
 
     const offsetStartIndex = startIndex === 0
-      ? 0 : startIndex - this.visibleRowsOffset >= 0
-      ? startIndex - this.visibleRowsOffset : 0 ;
+      ? 0 : startIndex - this.visibleOffset >= 0
+      ? startIndex - this.visibleOffset : 0 ;
     const offsetStopIndex = stopIndex === 0
-      ? 0 : stopIndex + this.visibleRowsOffset < this.rowCount
-      ? stopIndex + this.visibleRowsOffset : this.rowCount;
+      ? 0 : stopIndex + this.visibleOffset < this.itemCount
+      ? stopIndex + this.visibleOffset : this.itemCount;
 
     const [topOverflowHeight, bottomOverflowHeight] = this.calcOverflow(offsetStartIndex, offsetStopIndex);
     this.setTopOverflowHeight(topOverflowHeight);
@@ -132,38 +115,19 @@ export default class VirtualScroller extends HTMLElement {
     );
   }
 
-  calcRowsHeight(startIndex, stopIndex) {
-    let rowsHeight = 0;
-    for (let rowIndex = startIndex; rowIndex < stopIndex; rowIndex++) {
-      rowsHeight += this.getRowHeight(rowIndex)
+  calcItemsHeight(startIndex, stopIndex) {
+    let itemsHeight = 0;
+    for (let itemIndex = startIndex; itemIndex < stopIndex; itemIndex++) {
+      itemsHeight += this.getItemHeight(itemIndex)
     }
-    return rowsHeight;
+    return itemsHeight;
   }
 
   calcOverflow(startIndex, stopIndex) {
-    const aboveVisibleRowsHeight = this.calcRowsHeight(0, startIndex);
-    const belowVisibleRowsHeight = this.calcRowsHeight(stopIndex + 1, this.rowCount);
-    return [aboveVisibleRowsHeight, belowVisibleRowsHeight];
+    const beforeVisibleItemsHeight = this.calcItemsHeight(0, startIndex);
+    const afterVisibleItemsHeight = this.calcItemsHeight(stopIndex + 1, this.itemCount);
+    return [beforeVisibleItemsHeight, afterVisibleItemsHeight];
   }
-
-  // render() {
-  //   const [startIndex, stopIndex] = this.calcVisibleRowIndexes();
-  //   const belowVisibleRowsHeight = this.calcRowsHeight(stopIndex, this.rowCount - 1);
-  //   this.setBottomOverflowHeight(belowVisibleRowsHeight);
-  //   this.renderRows(startIndex, stopIndex);
-  //   this.updateVisibleRowIndexes(startIndex, stopIndex);
-  // }
-
-  // renderRows(startIndex, stopIndex) {
-  //   let fragment = document.createDocumentFragment();
-  //   for (let i = startIndex; i <= stopIndex; i++) {
-  //     const rowElement = this.rowFactory(i);
-  //     this.visibleElementsMap.set(rowElement, i);
-  //     fragment.appendChild(rowElement);
-  //   }
-  //   this.appendChild(fragment);
-  //   fragment = null;
-  // }
 
   setBottomOverflowHeight(height) {
     const bottomOverflowElement = this.shadowRoot.querySelector('#bottom-overflow');
@@ -186,63 +150,42 @@ export default class VirtualScroller extends HTMLElement {
   }
 
   // Returns thresholds for scrolldistance required to
-  // bring top or bottom row fully inside or outside visible view.
+  // bring top or bottom row/item fully inside or outside visible view.
   calcScrollThresholds(scrollDir = ScrollDir.DOWN) {
     // Scroll at top case.
     if (!this.scrollTop) {
-      const visibleRowsHeight = this.calcRowsHeight(
-        this.visibleRowsStartIndex,
-        this.visibleRowsStopIndex
+      const visibleItemsHeight = this.calcItemsHeight(
+        this.visibleStartIndex,
+        this.visibleStopIndex
       );
-      return [0, visibleRowsHeight - this.clientHeightCache]; // TODO: store clientHeight.
+      return [0, visibleItemsHeight - this.clientHeightCache]; // TODO: store clientHeight.
     }
 
-    const notVisibleTopRowsHeight = this.calcRowsHeight(0, this.visibleRowsStartIndex - 1);
-    const firstVisibleRowTopOffset = this.scrollTop - notVisibleTopRowsHeight;
-    const visibleRowsHeight = this.calcRowsHeight(
-      this.visibleRowsStartIndex,
-      this.visibleRowsStopIndex
+    const coveredTopItemsHeight = this.calcItemsHeight(0, this.visibleStartIndex - 1);
+    const firstVisibleItemTopOffset = this.scrollTop - coveredTopItemsHeight;
+    const visibleItemsHeight = this.calcItemsHeight(
+      this.visibleStartIndex,
+      this.visibleStopIndex
     );
-    const lastVisibleRowBottomOffset = visibleRowsHeight - this.clientHeightCache - firstVisibleRowTopOffset;
+    const lastVisibleItemBottomOffset = visibleItemsHeight - this.clientHeightCache - firstVisibleItemTopOffset;
 
     if (scrollDir === ScrollDir.UP) {
-      return [firstVisibleRowTopOffset, this.getRowHeight(this.visibleRowsStopIndex) - lastVisibleRowBottomOffset];
+      return [firstVisibleItemTopOffset, this.getItemHeight(this.visibleStopIndex) - lastVisibleItemBottomOffset];
     }
 
-    const topScrollThreshold = this.getRowHeight(this.visibleRowsStartIndex) - firstVisibleRowTopOffset;
-    return [topScrollThreshold, lastVisibleRowBottomOffset];
+    const topScrollThreshold = this.getItemHeight(this.visibleStartIndex) - firstVisibleItemTopOffset;
+    return [topScrollThreshold, lastVisibleItemBottomOffset];
   }
-
-  // calcBottomRowsToAdd(height) {
-  //   let startIndex = this.visibleRowsStopIndex + 1;
-  //   let stopIndex = startIndex;
-  //   let totalRowsHeight = 0;
-
-  //   for (let i = startIndex; i < this.rowCount; i++) {
-  //     totalRowsHeight += this.getRowHeight(i);
-  //     rowIndexes.push(i);
-  //     if (totalRowsHeight > height) {
-  //       stopIndex = i;
-  //       break;
-  //     }
-  //   }
-
-  //   return {
-  //     range: [startIndex, stopIndex],
-  //     totalHeight: totalRowsHeight,
-  //     count: (stopIndex - (this.visibleRowsStopIndex + 1)) + 1,
-  //   };
-  // }
 
   connectedCallback() {
     this.clientHeightCache = this.clientHeight; // Cache this for calculations.
     this.lastScrollPosition = this.scrollTop;
-    this.setRowHeightCalculator(() => 0);
 
     const handleScroll = (e) => {
       const scrollDistanceFromTop = this.scrollTop;
       const scrollDistance = scrollDistanceFromTop - this.lastScrollPosition;
       const isScrollDirDown = scrollDistance > 0;
+      this.lastScrollPosition = scrollDistanceFromTop;
 
       const [
         topThreshold,
@@ -250,16 +193,14 @@ export default class VirtualScroller extends HTMLElement {
       ] = this.calcScrollThresholds(isScrollDirDown ? ScrollDir.DOWN : ScrollDir.UP);
 
       if (bottomThreshold < 0 || topThreshold < 0) {
-        const [startIndex, stopIndex] = this.calcVisibleRowIndexes(scrollDistanceFromTop);
-        this.updateVisibleRowIndexes(startIndex, stopIndex);
+        const [startIndex, stopIndex] = this.calcVisibleItems(scrollDistanceFromTop);
+        this.updateVisibleItemIndexes(startIndex, stopIndex);
       }
-
-      this.lastScrollPosition = this.scrollTop;
     };
 
-    // const throttledHandleScroll = throttle(handleScroll, 5);
+    const throttledHandleScroll = throttle(handleScroll, 5);
 
-    this.addEventListener('scroll', handleScroll);
+    this.addEventListener('scroll', throttledHandleScroll);
 
     // The more specific selector the better the performance lookup.
     // const items = [...this.querySelectorAll(`:scope > *`)];
@@ -276,11 +217,6 @@ export default class VirtualScroller extends HTMLElement {
 
     // this.observer.observe(this, { childList: true, subtree: false });
   }
-
-  // show() {
-  //   template.innerHTML = '<slot></slot>'
-  //   this.shadowRoot.appendChild(document.importNode(template.content, true));
-  // }
 
   disconnectedCallback() {
     // this.observer && this.observer.disconnect();
