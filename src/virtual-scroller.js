@@ -7,8 +7,6 @@ listItemSheet.replaceSync(`
     overflow: scroll;
     overflow-x: hidden;
     border: 1px solid black;
-    height: 150px;
-    width: 300px;
   }
 `);
 
@@ -46,6 +44,34 @@ export default class VirtualScroller extends HTMLElement {
     this._itemCount = 0;
   }
 
+  static get observedAttributes() {
+    return ['height', 'width'];
+  }
+
+  get height() {
+    return this.hasAttribute('height') && Number(this.getAttribute('height').replace('px', ''));
+  }
+
+  set height(val) {
+    if (val) {
+      this.setAttribute('height', val);
+    } else {
+      this.removeAttribute('height');
+    }
+  }
+
+  get width() {
+    return this.hasAttribute && this.getAttribute('width');
+  }
+
+  set width(val) {
+    if (val) {
+      this.setAttribute('width', val)
+    } else {
+      this.removeAttribute('width');
+    }
+  }
+
   // TODO: Update visible indexes when updated.
   set itemCount(items) {
     this._itemCount = items;
@@ -59,6 +85,60 @@ export default class VirtualScroller extends HTMLElement {
     this.getItemHeight = fn;
     const [startIndex, stopIndex] = this.calcVisibleItems();
     this.updateVisibleItemIndexes(startIndex, stopIndex);
+  }
+
+  connectedCallback() {
+    this.clientHeightCache = this.clientHeight; // Cache this for calculations.
+    this.lastScrollPosition = this.scrollTop;
+
+    const throttledHandleScroll = throttle(this.handleScroll, 5);
+
+    this.addEventListener('scroll', throttledHandleScroll);
+
+    // The more specific selector the better the performance lookup.
+    // const items = [...this.querySelectorAll(`:scope > *`)];
+
+    // this.observer = new MutationObserver((mutationsList) => {
+    //   for (const mutation of mutationsList) {
+    //     if (mutation.type !== 'childList') {
+    //       return;
+    //     }
+    //     const items = [...this.querySelectorAll(`:scope > *`)];
+    //     console.log(items);
+    //   }
+    // });
+
+    // this.observer.observe(this, { childList: true, subtree: false });
+  }
+
+  disconnectedCallback() {
+    // this.observer && this.observer.disconnect();
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === 'height') {
+      this.style.height = newValue.includes('px') ? newValue : `${newValue}px`;
+    }
+    if (name === 'width') {
+      this.style.width = newValue.includes('px') ? newValue : `${newValue}px`;
+    }
+  }
+
+  handleScroll(e) {
+    const scrollDistanceFromTop = this.scrollTop;
+    const scrollDistance = scrollDistanceFromTop - this.lastScrollPosition;
+    const isScrollDirDown = scrollDistance > 0;
+    this.lastScrollPosition = scrollDistanceFromTop;
+
+    const [
+      topThreshold,
+      bottomThreshold
+    ] = this.calcScrollThresholds(isScrollDirDown ? ScrollDir.DOWN : ScrollDir.UP);
+
+    if (bottomThreshold < 0 || topThreshold < 0) {
+      const [startIndex, stopIndex] = this.calcVisibleItems(scrollDistanceFromTop);
+      this.updateVisibleItemIndexes(startIndex, stopIndex);
+    }
   }
 
   calcVisibleItems(scrollTop = this.scrollTop) {
@@ -175,51 +255,6 @@ export default class VirtualScroller extends HTMLElement {
 
     const topScrollThreshold = this.getItemHeight(this.visibleStartIndex) - firstVisibleItemTopOffset;
     return [topScrollThreshold, lastVisibleItemBottomOffset];
-  }
-
-  connectedCallback() {
-    this.clientHeightCache = this.clientHeight; // Cache this for calculations.
-    this.lastScrollPosition = this.scrollTop;
-
-    const handleScroll = (e) => {
-      const scrollDistanceFromTop = this.scrollTop;
-      const scrollDistance = scrollDistanceFromTop - this.lastScrollPosition;
-      const isScrollDirDown = scrollDistance > 0;
-      this.lastScrollPosition = scrollDistanceFromTop;
-
-      const [
-        topThreshold,
-        bottomThreshold
-      ] = this.calcScrollThresholds(isScrollDirDown ? ScrollDir.DOWN : ScrollDir.UP);
-
-      if (bottomThreshold < 0 || topThreshold < 0) {
-        const [startIndex, stopIndex] = this.calcVisibleItems(scrollDistanceFromTop);
-        this.updateVisibleItemIndexes(startIndex, stopIndex);
-      }
-    };
-
-    const throttledHandleScroll = throttle(handleScroll, 5);
-
-    this.addEventListener('scroll', throttledHandleScroll);
-
-    // The more specific selector the better the performance lookup.
-    // const items = [...this.querySelectorAll(`:scope > *`)];
-
-    // this.observer = new MutationObserver((mutationsList) => {
-    //   for (const mutation of mutationsList) {
-    //     if (mutation.type !== 'childList') {
-    //       return;
-    //     }
-    //     const items = [...this.querySelectorAll(`:scope > *`)];
-    //     console.log(items);
-    //   }
-    // });
-
-    // this.observer.observe(this, { childList: true, subtree: false });
-  }
-
-  disconnectedCallback() {
-    // this.observer && this.observer.disconnect();
   }
 }
 
