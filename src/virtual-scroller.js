@@ -35,7 +35,8 @@ export default class VirtualScroller extends HTMLElement {
     shadowRoot.adoptedStyleSheets = [listItemSheet];
 
     this.getItemHeight = () => 0;
-    this.visibleOffset = 3;
+    this.totalItemsHeight = 0;
+    this.visibleOffset = 0;
     this.observer = null;
     this.lastScrollPosition = 0;
     this.visibleStartIndex = 0;
@@ -44,56 +45,51 @@ export default class VirtualScroller extends HTMLElement {
     this._itemCount = 0;
   }
 
-  static get observedAttributes() {
-    return ['height', 'width'];
-  }
-
-  get height() {
-    return this.hasAttribute('height') && Number(this.getAttribute('height').replace('px', ''));
-  }
-
-  set height(val) {
-    if (val) {
-      this.setAttribute('height', val);
-    } else {
-      this.removeAttribute('height');
-    }
-  }
-
-  get width() {
-    return this.hasAttribute && this.getAttribute('width');
-  }
-
-  set width(val) {
-    if (val) {
-      this.setAttribute('width', val)
-    } else {
-      this.removeAttribute('width');
-    }
-  }
-
   // TODO: Update visible indexes when updated.
-  set itemCount(items) {
-    this._itemCount = items;
-  }
+  // set itemCount(items) {
+  //   this._itemCount = items;
+  // }
 
-  get itemCount() {
-    return this._itemCount;
-  }
+  // get itemCount() {
+  //   return this._itemCount;
+  // }
 
-  init(fn) {
-    this.getItemHeight = fn;
+  init(itemCount, getItemHeight) {
+    this.itemCount = itemCount;
+    this.getItemHeight = getItemHeight;
     const [startIndex, stopIndex] = this.calcVisibleItems();
     this.updateVisibleItemIndexes(startIndex, stopIndex);
+
+    // Calculate and store this after initial render,
+    // since calcVisibleItems is cheap when scroll is at top.
+    this.itemsHeightIndex = this.createItemsHeightIndex(itemCount);
+    // this.totalItemsHeight = this.calcItemsHeight(0, this.itemCount);
+  }
+
+  createItemsHeightIndex(itemCount) {
+    const itemsHeightCache = [];
+    for (let i = 0; i < itemCount; i++) {
+      if (!i) {
+        itemsHeightCache[i] = this.getItemHeight(i);
+        continue;
+      }
+      itemsHeightCache[i] = itemsHeightCache[i - 1] + this.getItemHeight(i);
+    }
+
+    return itemsHeightCache;
+  }
+
+  resetItemsHeightIndex() {
+    this.itemsHeightIndex = this.createItemsHeightIndex(this.itemCount, this.getItemHeight);
   }
 
   connectedCallback() {
     this.clientHeightCache = this.clientHeight; // Cache this for calculations.
     this.lastScrollPosition = this.scrollTop;
 
-    const throttledHandleScroll = throttle(this.handleScroll, 5);
+    const throttledHandleScroll = throttle(this.handleScroll.bind(this), 5);
 
-    this.addEventListener('scroll', throttledHandleScroll);
+    this.addEventListener('scroll', this.handleScroll.bind(this));
 
     // The more specific selector the better the performance lookup.
     // const items = [...this.querySelectorAll(`:scope > *`)];
@@ -115,15 +111,6 @@ export default class VirtualScroller extends HTMLElement {
     // this.observer && this.observer.disconnect();
   }
 
-  attributeChangedCallback(name, oldValue, newValue) {
-    if (name === 'height') {
-      this.style.height = newValue.includes('px') ? newValue : `${newValue}px`;
-    }
-    if (name === 'width') {
-      this.style.width = newValue.includes('px') ? newValue : `${newValue}px`;
-    }
-  }
-
   handleScroll(e) {
     const scrollDistanceFromTop = this.scrollTop;
     const scrollDistance = scrollDistanceFromTop - this.lastScrollPosition;
@@ -141,23 +128,49 @@ export default class VirtualScroller extends HTMLElement {
     }
   }
 
+  // TODO(dag): write scroll tests (replace/append items, no need to optimize).
   calcVisibleItems(scrollTop = this.scrollTop) {
-    // TODO: Optimize...
-    let startIndex = 0;
-    for (let totalHeight = 0; startIndex < this.itemCount; startIndex++) {
-      totalHeight += this.getItemHeight(startIndex);
-      if (totalHeight > scrollTop) {
-        break;
+    const findStopIndex = (maxHeight, startIndex = 0) => {
+      let stopIndex = startIndex
+      for (let totalHeight = 0; stopIndex < this.itemCount; stopIndex++) {
+        totalHeight += this.getItemHeight(stopIndex);
+        console.log(totalHeight, '>', maxHeight);
+        if (totalHeight > maxHeight) {
+          break;
+        }
       }
+      return stopIndex;
     }
 
-    let stopIndex = startIndex;
-    for (let totalHeight = 0; stopIndex < this.itemCount; stopIndex++) {
-      totalHeight += this.getItemHeight(stopIndex);
-      if (totalHeight > this.clientHeightCache) {
-        break;
-      }
+    // Initial when scrollbar is presumably at the top.
+    if (!scrollTop) {
+      let startIndex = 0;
+      // for (let totalHeight = 0; startIndex < this.itemCount; startIndex++) {
+      //   totalHeight += this.getItemHeight(startIndex);
+      //   if (totalHeight > scrollTop) {
+      //     break;
+      //   }
+      // }
+
+      let stopIndex = findStopIndex(this.clientHeightCache, startIndex);
+
+      return [
+        startIndex,
+        stopIndex,
+      ];
     }
+
+    // Otherwise find startIndex using binary-search.
+    const startIndex = bSearch(this.itemsHeightIndex, height => height > scrollTop);
+
+    // const stopIndex = bSearch(
+    //   this.itemsHeightIndex.slice(startIndex + 1),
+    //   height => height > scrollTop + this.clientHeightCache,
+    //   startIndex + 1
+    // );
+
+    // TODO: Fix this, doesn't account for top threshold, i.e. partial startIndex item height.
+    const stopIndex = findStopIndex(this.clientHeightCache, startIndex);
 
     return [
       startIndex,
@@ -271,3 +284,30 @@ function throttle(fn, wait) {
     }
   }
 }
+
+function bSearch(array, pred) {
+  let lo = -1, hi = array.length;
+  while (1 + lo < hi) {
+    const mi = lo + ((hi - lo) >> 1);
+    if (pred(array[mi])) {
+      hi = mi;
+    } else {
+      lo = mi;
+    }
+  }
+  return hi;
+}
+
+// function bSearch2(array, pred, startOffset = -1) {
+//   let start = startOffset;
+//   let end = array.length;
+//   while (1 + start < end) {
+//     const mid = start + ((end - start) >> 1);
+//     if (pred(array[mid])) {
+//       end = mid;
+//     } else {
+//       start = end;
+//     }
+//   }
+//   return end;
+// }

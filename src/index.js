@@ -22,12 +22,12 @@ const itemList = (items) => html`
 // `;
 
 virtualScroller.addEventListener('visibleRangeChange', ({ detail: { startIndex, stopIndex } }) => {
-  // console.log('visibleRangeChange', startIndex, stopIndex);
+  console.log('visibleRangeChange', startIndex, stopIndex);
   const visibleItemList = itemList(items.slice(startIndex, stopIndex + 1));
   render(visibleItemList, virtualScroller);
 });
 
-virtualScroller.itemCount = items.length;
-virtualScroller.init((index) => {
+// virtualScroller.itemCount = items.length;
+virtualScroller.init(items.length, (index) => {
   return index % 2 === 0 ? 40 : 80; // row heights.
 });
