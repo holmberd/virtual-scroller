@@ -62,11 +62,11 @@ export default class VirtualScroller extends HTMLElement {
 
     // Calculate and store this after initial render,
     // since calcVisibleItems is cheap when scroll is at top.
-    this.itemsHeightIndex = this.createItemsHeightIndex(itemCount);
+    this.itemsHeightIndex = this.buildItemsHeightIndex(itemCount);
     // this.totalItemsHeight = this.calcItemsHeight(0, this.itemCount);
   }
 
-  createItemsHeightIndex(itemCount) {
+  buildItemsHeightIndex(itemCount) {
     const itemsHeightCache = [];
     for (let i = 0; i < itemCount; i++) {
       if (!i) {
@@ -112,47 +112,61 @@ export default class VirtualScroller extends HTMLElement {
   }
 
   handleScroll(e) {
-    const scrollDistanceFromTop = this.scrollTop;
-    const scrollDistance = scrollDistanceFromTop - this.lastScrollPosition;
+    const scrollTopOffset = this.scrollTop;
+    const scrollDistance = scrollTopOffset - this.lastScrollPosition;
     const isScrollDirDown = scrollDistance > 0;
-    this.lastScrollPosition = scrollDistanceFromTop;
+    this.lastScrollPosition = scrollTopOffset;
 
     const [
       topThreshold,
       bottomThreshold
-    ] = this.calcScrollThresholds(isScrollDirDown ? ScrollDir.DOWN : ScrollDir.UP);
+    ] = this.calcScrollThresholds(isScrollDirDown ? ScrollDir.DOWN : ScrollDir.UP, scrollTopOffset);
 
     if (bottomThreshold < 0 || topThreshold < 0) {
-      const [startIndex, stopIndex] = this.calcVisibleItems(scrollDistanceFromTop);
+      const [startIndex, stopIndex] = this.calcVisibleItems(scrollTopOffset);
       this.updateVisibleItemIndexes(startIndex, stopIndex);
     }
   }
 
+  // Returns thresholds for scrolldistance required to
+  // bring top or bottom row/item fully inside or outside visible view.
+  calcScrollThresholds(scrollDir = ScrollDir.DOWN, scrollTopOffset) {
+    // Initial bottom scroll case.
+    if (!scrollTopOffset && scrollDir === ScrollDir.DOWN) {
+      const visibleItemsHeight = this.calcItemsHeight(
+        this.visibleStartIndex,
+        this.visibleStopIndex
+      );
+      return [0, visibleItemsHeight - this.clientHeightCache]; // TODO: store clientHeight.
+    }
+
+    const coveredTopItemsHeight = this.calcItemsHeight(0, this.visibleStartIndex);
+    const firstVisibleItemTopOffset = scrollTopOffset - coveredTopItemsHeight;
+    const visibleItemsHeight = this.calcItemsHeight(
+      this.visibleStartIndex,
+      this.visibleStopIndex
+    );
+    const lastVisibleItemBottomOffset = visibleItemsHeight - this.clientHeightCache - firstVisibleItemTopOffset;
+
+    if (scrollDir === ScrollDir.UP) {
+      return [firstVisibleItemTopOffset, this.getItemHeight(this.visibleStopIndex) - lastVisibleItemBottomOffset];
+    }
+
+    const topScrollThreshold = this.getItemHeight(this.visibleStartIndex) - firstVisibleItemTopOffset;
+    return [topScrollThreshold, lastVisibleItemBottomOffset];
+  }
+
   // TODO(dag): write scroll tests (replace/append items, no need to optimize).
   calcVisibleItems(scrollTop = this.scrollTop) {
-    const findStopIndex = (maxHeight, startIndex = 0) => {
-      let stopIndex = startIndex
+    // Initial case when scrollbar is at the top.
+    if (!scrollTop) {
+      let startIndex = stopIndex = 0;
       for (let totalHeight = 0; stopIndex < this.itemCount; stopIndex++) {
         totalHeight += this.getItemHeight(stopIndex);
-        console.log(totalHeight, '>', maxHeight);
-        if (totalHeight > maxHeight) {
+        if (totalHeight > this.clientHeightCache) {
           break;
         }
       }
-      return stopIndex;
-    }
-
-    // Initial when scrollbar is presumably at the top.
-    if (!scrollTop) {
-      let startIndex = 0;
-      // for (let totalHeight = 0; startIndex < this.itemCount; startIndex++) {
-      //   totalHeight += this.getItemHeight(startIndex);
-      //   if (totalHeight > scrollTop) {
-      //     break;
-      //   }
-      // }
-
-      let stopIndex = findStopIndex(this.clientHeightCache, startIndex);
 
       return [
         startIndex,
@@ -160,17 +174,13 @@ export default class VirtualScroller extends HTMLElement {
       ];
     }
 
-    // Otherwise find startIndex using binary-search.
+    // Otherwise find startIndex using binary-search and itemsHeightIndex.
     const startIndex = bSearch(this.itemsHeightIndex, height => height > scrollTop);
-
-    // const stopIndex = bSearch(
-    //   this.itemsHeightIndex.slice(startIndex + 1),
-    //   height => height > scrollTop + this.clientHeightCache,
-    //   startIndex + 1
-    // );
-
-    // TODO: Fix this, doesn't account for top threshold, i.e. partial startIndex item height.
-    const stopIndex = findStopIndex(this.clientHeightCache, startIndex);
+    const stopIndex = bSearch(
+      this.itemsHeightIndex,
+      height => height > scrollTop + this.clientHeightCache,
+      startIndex
+    );
 
     return [
       startIndex,
@@ -241,34 +251,6 @@ export default class VirtualScroller extends HTMLElement {
     const topOverflowElement = this.shadowRoot.querySelector('#top-overflow');
     return Number(topOverflowElement.style.height.replace('px', '')) ?? 0;
   }
-
-  // Returns thresholds for scrolldistance required to
-  // bring top or bottom row/item fully inside or outside visible view.
-  calcScrollThresholds(scrollDir = ScrollDir.DOWN) {
-    // Scroll at top case.
-    if (!this.scrollTop) {
-      const visibleItemsHeight = this.calcItemsHeight(
-        this.visibleStartIndex,
-        this.visibleStopIndex
-      );
-      return [0, visibleItemsHeight - this.clientHeightCache]; // TODO: store clientHeight.
-    }
-
-    const coveredTopItemsHeight = this.calcItemsHeight(0, this.visibleStartIndex - 1);
-    const firstVisibleItemTopOffset = this.scrollTop - coveredTopItemsHeight;
-    const visibleItemsHeight = this.calcItemsHeight(
-      this.visibleStartIndex,
-      this.visibleStopIndex
-    );
-    const lastVisibleItemBottomOffset = visibleItemsHeight - this.clientHeightCache - firstVisibleItemTopOffset;
-
-    if (scrollDir === ScrollDir.UP) {
-      return [firstVisibleItemTopOffset, this.getItemHeight(this.visibleStopIndex) - lastVisibleItemBottomOffset];
-    }
-
-    const topScrollThreshold = this.getItemHeight(this.visibleStartIndex) - firstVisibleItemTopOffset;
-    return [topScrollThreshold, lastVisibleItemBottomOffset];
-  }
 }
 
 if (!customElements.get('virtual-scroller')) {
@@ -285,17 +267,17 @@ function throttle(fn, wait) {
   }
 }
 
-function bSearch(array, pred) {
-  let lo = -1, hi = array.length;
-  while (1 + lo < hi) {
-    const mi = lo + ((hi - lo) >> 1);
-    if (pred(array[mi])) {
-      hi = mi;
+function bSearch(array, pred, start = -1) {
+  let end = array.length;
+  while (start + 1 < end) {
+    const mid = start + ((end - start) >> 1);
+    if (pred(array[mid])) {
+      end = mid;
     } else {
-      lo = mi;
+      start = mid;
     }
   }
-  return hi;
+  return end;
 }
 
 // function bSearch2(array, pred, startOffset = -1) {

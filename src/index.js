@@ -8,7 +8,8 @@ const virtualScroller = document.querySelector('virtual-scroller');
 
 const items = Array(1000).fill(true).map((_, index) => ({
   id: index,
-  height: index % 2 === 0 ? 40 : 80,
+  // height: index % 2 === 0 ? 40 : 80,
+  height: 120,
 }));
 
 const itemList = (items) => html`
@@ -28,6 +29,10 @@ virtualScroller.addEventListener('visibleRangeChange', ({ detail: { startIndex, 
 });
 
 // virtualScroller.itemCount = items.length;
-virtualScroller.init(items.length, (index) => {
+/* virtualScroller.init(items.length, (index) => {
   return index % 2 === 0 ? 40 : 80; // row heights.
+}); */
+
+virtualScroller.init(items.length, (index) => {
+  return 120;
 });
