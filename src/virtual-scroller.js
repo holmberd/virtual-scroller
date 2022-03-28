@@ -11,11 +11,15 @@ const template = document.createElement('template');
 const listItemSheet = new CSSStyleSheet();
 listItemSheet.replaceSync(`
   :host {
+    contain: content;
     display: block;
     position: relative;
     overflow: scroll;
     overflow-x: hidden;
     border: 1px solid black;
+  }
+  #top-overflow, #bottom-overflow {
+    visibility: hidden;
   }
 `);
 
@@ -44,7 +48,7 @@ export default class VirtualScroller extends HTMLElement {
     shadowRoot.adoptedStyleSheets = [listItemSheet];
 
     this.totalItemsHeight = 0;
-    this.visibleOffset = 0;
+    this.visibleOffset = 2;
     this.observer = null;
     this.lastScrollPosition = 0;
     this.visibleStartIndex = 0;
@@ -60,7 +64,7 @@ export default class VirtualScroller extends HTMLElement {
 
     const throttledHandleScroll = throttle(this.handleScroll.bind(this), 5);
 
-    this.addEventListener('scroll', this.handleScroll.bind(this));
+    this.addEventListener('scroll', throttledHandleScroll);
 
     // The more specific selector the better the performance lookup.
     // const items = [...this.querySelectorAll(`:scope > *`)];
@@ -118,18 +122,6 @@ export default class VirtualScroller extends HTMLElement {
     }
 
     return itemsHeightCache;
-  }
-
-  /**
-   * @private
-   * @param {number} index
-   * @returns {number}
-   */
-  getItemHeightFromIndex(index) {
-    if (index <= 0 || index > this.itemsHeightIndex.length) {
-      return 0;
-    }
-    return this.itemsHeightIndex[index];
   }
 
   /**
@@ -298,7 +290,7 @@ export default class VirtualScroller extends HTMLElement {
     const beforeVisibleItemsHeight = startIndex <= 0
       ? 0 : this.itemsHeightIndex[startIndex - 1];
 
-    const afterVisibleItemsHeight = stopIndex === this.itemCount - 1
+    const afterVisibleItemsHeight = stopIndex >= this.itemCount - 1
       ? 0 : this.calcHeightBetween(stopIndex + 1, this.itemCount - 1);
 
     return [beforeVisibleItemsHeight, afterVisibleItemsHeight];
