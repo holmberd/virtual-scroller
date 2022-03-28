@@ -1,3 +1,12 @@
+import { throttle } from './utils';
+
+// TODO
+// - Replace getItemsHeight with itemsHeightIndex.
+//  - change calcOverflow to use heightIndex if it's ready, perhaps build it right away?
+//    - getItemHeight can probably fetch from index if it's available.
+// - Add tests.
+// TODO(dag): write scroll tests (replace/append items, no need to optimize).
+
 const template = document.createElement('template');
 const listItemSheet = new CSSStyleSheet();
 listItemSheet.replaceSync(`
@@ -34,7 +43,6 @@ export default class VirtualScroller extends HTMLElement {
     shadowRoot.appendChild(document.importNode(template.content, true));
     shadowRoot.adoptedStyleSheets = [listItemSheet];
 
-    this.getItemHeight = () => 0;
     this.totalItemsHeight = 0;
     this.visibleOffset = 0;
     this.observer = null;
@@ -43,44 +51,7 @@ export default class VirtualScroller extends HTMLElement {
     this.visibleStopIndex = 0;
     this.clientHeightCache = 0;
     this._itemCount = 0;
-  }
-
-  // TODO: Update visible indexes when updated.
-  // set itemCount(items) {
-  //   this._itemCount = items;
-  // }
-
-  // get itemCount() {
-  //   return this._itemCount;
-  // }
-
-  init(itemCount, getItemHeight) {
-    this.itemCount = itemCount;
-    this.getItemHeight = getItemHeight;
-    const [startIndex, stopIndex] = this.calcVisibleItems();
-    this.updateVisibleItemIndexes(startIndex, stopIndex);
-
-    // Calculate and store this after initial render,
-    // since calcVisibleItems is cheap when scroll is at top.
-    this.itemsHeightIndex = this.buildItemsHeightIndex(itemCount);
-    // this.totalItemsHeight = this.calcItemsHeight(0, this.itemCount);
-  }
-
-  buildItemsHeightIndex(itemCount) {
-    const itemsHeightCache = [];
-    for (let i = 0; i < itemCount; i++) {
-      if (!i) {
-        itemsHeightCache[i] = this.getItemHeight(i);
-        continue;
-      }
-      itemsHeightCache[i] = itemsHeightCache[i - 1] + this.getItemHeight(i);
-    }
-
-    return itemsHeightCache;
-  }
-
-  resetItemsHeightIndex() {
-    this.itemsHeightIndex = this.createItemsHeightIndex(this.itemCount, this.getItemHeight);
+    this.getItemHeight = () => 0;
   }
 
   connectedCallback() {
@@ -111,6 +82,139 @@ export default class VirtualScroller extends HTMLElement {
     // this.observer && this.observer.disconnect();
   }
 
+  /**
+   * @public
+   * @param {number} itemCount
+   * @param {function} getItemHeight
+   */
+  init(itemCount, getItemHeight) {
+    this.itemCount = itemCount;
+    this.getItemHeight = getItemHeight;
+    this.itemsHeightIndex = this.buildItemsHeightIndex(itemCount);
+    this.update();
+  }
+
+  /**
+   * @public
+   */
+  resetItemsHeightIndex() {
+    this.itemsHeightIndex = this.buildItemsHeightIndex(this.itemCount, this.getItemHeight);
+    this.update();
+  }
+
+  /**
+   * @private
+   * @param {number} itemCount
+   * @returns {number[]}
+   */
+  buildItemsHeightIndex(itemCount) {
+    const itemsHeightCache = [];
+    for (let i = 0; i < itemCount; i++) {
+      if (!i) {
+        itemsHeightCache[i] = this.getItemHeight(i);
+        continue;
+      }
+      itemsHeightCache[i] = itemsHeightCache[i - 1] + this.getItemHeight(i);
+    }
+
+    return itemsHeightCache;
+  }
+
+  /**
+   * @private
+   * @param {number} index
+   * @returns {number}
+   */
+  getItemHeightFromIndex(index) {
+    if (index <= 0 || index > this.itemsHeightIndex.length) {
+      return 0;
+    }
+    return this.itemsHeightIndex[index];
+  }
+
+  /**
+   * @private
+   */
+  update() {
+    const [startIndex, stopIndex] = this.calcVisibleItems();
+    this.updateVisibleItemIndexes(startIndex, stopIndex);
+  }
+
+
+  /**
+   * @private
+   * @param {number} scrollTop
+   * @returns {[number, number]} [startIndex, stopIndex]
+   */
+  calcVisibleItems(scrollTop = this.scrollTop) {
+    // Handles the initial case when scrollbar is at the top.
+    if (!scrollTop) {
+      let startIndex = 0;
+      let stopIndex = startIndex;
+      for (; stopIndex < this.itemCount; stopIndex++) {
+        if (this.itemsHeightIndex[stopIndex] > this.clientHeightCache) {
+          break;
+        }
+      }
+
+      return [
+        startIndex,
+        stopIndex,
+      ];
+    }
+
+    // Otherwise find startIndex using binary-search.
+    const startIndex = bSearch(this.itemsHeightIndex, height => height > scrollTop);
+    const stopIndex = bSearch(
+      this.itemsHeightIndex,
+      height => height > scrollTop + this.clientHeightCache,
+      startIndex
+    );
+
+    return [
+      startIndex,
+      stopIndex,
+    ];
+  }
+
+  /**
+   * @private
+   * @param {number} startIndex
+   * @param {number} stopIndex
+   * @emits visibleRangeChange
+   */
+  updateVisibleItemIndexes(startIndex, stopIndex) {
+    if (this.visibleStartIndex === startIndex && this.visibleStopIndex === stopIndex) {
+      return;
+    }
+    this.visibleStartIndex = startIndex;
+    this.visibleStopIndex = stopIndex;
+
+    const offsetStartIndex = startIndex === 0
+      ? 0 : startIndex - this.visibleOffset >= 0
+        ? startIndex - this.visibleOffset : 0;
+
+    const offsetStopIndex = stopIndex === 0
+      ? 0 : stopIndex + this.visibleOffset < this.itemCount
+        ? stopIndex + this.visibleOffset : this.itemCount;
+
+    this.updateScrollOverflow(offsetStartIndex, offsetStopIndex);
+
+    this.dispatchEvent(
+      new CustomEvent(Event.VISIBLE_RANGE_CHANGE, {
+        detail: {
+          startIndex: offsetStartIndex,
+          stopIndex: offsetStopIndex,
+        },
+        bubbles: true,
+      })
+    );
+  }
+
+  /**
+   * @private
+   * @param {ScrollEvent} e
+   */
   handleScroll(e) {
     const scrollTopOffset = this.scrollTop;
     const scrollDistance = scrollTopOffset - this.lastScrollPosition;
@@ -128,128 +232,94 @@ export default class VirtualScroller extends HTMLElement {
     }
   }
 
-  // Returns thresholds for scrolldistance required to
-  // bring top or bottom row/item fully inside or outside visible view.
+  /**
+   * @private
+   * @param {number} startIndex
+   * @param {number} stopIndex
+   * @returns {number}
+   */
+  calcHeightBetween(startIndex, stopIndex) {
+    if (startIndex > stopIndex) {
+      throw Error('start index must come before stop index');
+    }
+    return this.itemsHeightIndex[stopIndex] - (this.itemsHeightIndex[startIndex - 1] || 0);
+  }
+
+  /**
+   * Returns thresholds for scrolldistance required to
+   * bring top or bottom row/item fully inside or outside visible view.
+   *
+   * @private
+   * @param {string} scrollDir
+   * @param {number} scrollTopOffset
+   * @returns {[number, number]} [top, bottom]
+   */
   calcScrollThresholds(scrollDir = ScrollDir.DOWN, scrollTopOffset) {
-    // Initial bottom scroll case.
+    const visibleItemsHeight = this.calcHeightBetween(this.visibleStartIndex, this.visibleStopIndex);
+
+    // Handles the initial case when scrollbar is at the top.
     if (!scrollTopOffset && scrollDir === ScrollDir.DOWN) {
-      const visibleItemsHeight = this.calcItemsHeight(
-        this.visibleStartIndex,
-        this.visibleStopIndex
-      );
-      return [0, visibleItemsHeight - this.clientHeightCache]; // TODO: store clientHeight.
+      return [0, visibleItemsHeight - this.clientHeightCache];
     }
 
-    const coveredTopItemsHeight = this.calcItemsHeight(0, this.visibleStartIndex);
-    const firstVisibleItemTopOffset = scrollTopOffset - coveredTopItemsHeight;
-    const visibleItemsHeight = this.calcItemsHeight(
-      this.visibleStartIndex,
-      this.visibleStopIndex
-    );
+    const aboveVisibleItemsHeight = !this.visibleStartIndex ? 0 : this.itemsHeightIndex[this.visibleStartIndex - 1];
+    const firstVisibleItemTopOffset = scrollTopOffset - aboveVisibleItemsHeight;
     const lastVisibleItemBottomOffset = visibleItemsHeight - this.clientHeightCache - firstVisibleItemTopOffset;
 
     if (scrollDir === ScrollDir.UP) {
-      return [firstVisibleItemTopOffset, this.getItemHeight(this.visibleStopIndex) - lastVisibleItemBottomOffset];
-    }
-
-    const topScrollThreshold = this.getItemHeight(this.visibleStartIndex) - firstVisibleItemTopOffset;
-    return [topScrollThreshold, lastVisibleItemBottomOffset];
-  }
-
-  // TODO(dag): write scroll tests (replace/append items, no need to optimize).
-  calcVisibleItems(scrollTop = this.scrollTop) {
-    // Initial case when scrollbar is at the top.
-    if (!scrollTop) {
-      let startIndex = stopIndex = 0;
-      for (let totalHeight = 0; stopIndex < this.itemCount; stopIndex++) {
-        totalHeight += this.getItemHeight(stopIndex);
-        if (totalHeight > this.clientHeightCache) {
-          break;
-        }
-      }
-
       return [
-        startIndex,
-        stopIndex,
+        firstVisibleItemTopOffset,
+        this.itemsHeightIndex[this.visibleStopIndex] - lastVisibleItemBottomOffset
       ];
     }
 
-    // Otherwise find startIndex using binary-search and itemsHeightIndex.
-    const startIndex = bSearch(this.itemsHeightIndex, height => height > scrollTop);
-    const stopIndex = bSearch(
-      this.itemsHeightIndex,
-      height => height > scrollTop + this.clientHeightCache,
-      startIndex
-    );
-
-    return [
-      startIndex,
-      stopIndex,
-    ];
+    const topScrollThreshold = this.itemsHeightIndex[this.visibleStartIndex] - firstVisibleItemTopOffset;
+    return [topScrollThreshold, lastVisibleItemBottomOffset];
   }
 
-  updateVisibleItemIndexes(startIndex, stopIndex) {
-    if (this.visibleStartIndex === startIndex && this.visibleStopIndex === stopIndex) {
-      return;
-    }
-
-    this.visibleStartIndex = startIndex;
-    this.visibleStopIndex = stopIndex;
-
-    const offsetStartIndex = startIndex === 0
-      ? 0 : startIndex - this.visibleOffset >= 0
-      ? startIndex - this.visibleOffset : 0 ;
-    const offsetStopIndex = stopIndex === 0
-      ? 0 : stopIndex + this.visibleOffset < this.itemCount
-      ? stopIndex + this.visibleOffset : this.itemCount;
-
-    const [topOverflowHeight, bottomOverflowHeight] = this.calcOverflow(offsetStartIndex, offsetStopIndex);
+  /**
+   * @private
+   * @param {number} startIndex
+   * @param {number} stopIndex
+   */
+  updateScrollOverflow(startIndex, stopIndex) {
+    const [topOverflowHeight, bottomOverflowHeight] = this.calcScrollOverflow(startIndex, stopIndex);
     this.setTopOverflowHeight(topOverflowHeight);
     this.setBottomOverflowHeight(bottomOverflowHeight);
-
-    this.dispatchEvent(
-      new CustomEvent(Event.VISIBLE_RANGE_CHANGE, {
-        detail: {
-          startIndex: offsetStartIndex,
-          stopIndex: offsetStopIndex,
-        },
-        bubbles: true,
-      })
-    );
   }
 
-  calcItemsHeight(startIndex, stopIndex) {
-    let itemsHeight = 0;
-    for (let itemIndex = startIndex; itemIndex < stopIndex; itemIndex++) {
-      itemsHeight += this.getItemHeight(itemIndex)
-    }
-    return itemsHeight;
-  }
+  /**
+   * @private
+   * @param {number} startIndex
+   * @param {number} stopIndex
+   * @returns {[number, number]} [before, after]
+   */
+  calcScrollOverflow(startIndex, stopIndex) {
+    const beforeVisibleItemsHeight = startIndex <= 0
+      ? 0 : this.itemsHeightIndex[startIndex - 1];
 
-  calcOverflow(startIndex, stopIndex) {
-    const beforeVisibleItemsHeight = this.calcItemsHeight(0, startIndex);
-    const afterVisibleItemsHeight = this.calcItemsHeight(stopIndex + 1, this.itemCount);
+    const afterVisibleItemsHeight = stopIndex === this.itemCount - 1
+      ? 0 : this.calcHeightBetween(stopIndex + 1, this.itemCount - 1);
+
     return [beforeVisibleItemsHeight, afterVisibleItemsHeight];
   }
 
+  /**
+   * @private
+   * @param {number} height
+   */
   setBottomOverflowHeight(height) {
     const bottomOverflowElement = this.shadowRoot.querySelector('#bottom-overflow');
     bottomOverflowElement.style.height = `${Math.max(0, height)}px`;
   }
 
-  getBottomOverflowHeight() {
-    const bottomOverflowElement = this.shadowRoot.querySelector('#bottom-overflow');
-    return Number(bottomOverflowElement.style.height.replace('px', '')) ?? 0;
-  }
-
+  /**
+   * @private
+   * @param {number} height
+   */
   setTopOverflowHeight(height) {
     const topOverflowElement = this.shadowRoot.querySelector('#top-overflow');
     topOverflowElement.style.height = `${Math.max(0, height)}px`;
-  }
-
-  getTopOverflowHeight() {
-    const topOverflowElement = this.shadowRoot.querySelector('#top-overflow');
-    return Number(topOverflowElement.style.height.replace('px', '')) ?? 0;
   }
 }
 
@@ -257,16 +327,13 @@ if (!customElements.get('virtual-scroller')) {
   customElements.define('virtual-scroller', VirtualScroller)
 }
 
-function throttle(fn, wait) {
-  var time = Date.now();
-  return function () {
-    if ((time + wait - Date.now()) < 0) {
-      fn();
-      time = Date.now();
-    }
-  }
-}
-
+/**
+ * Binary search
+ * @param {number[]} array
+ * @param {function} pred
+ * @param {number} start
+ * @returns {number}
+ */
 function bSearch(array, pred, start = -1) {
   let end = array.length;
   while (start + 1 < end) {
@@ -279,17 +346,3 @@ function bSearch(array, pred, start = -1) {
   }
   return end;
 }
-
-// function bSearch2(array, pred, startOffset = -1) {
-//   let start = startOffset;
-//   let end = array.length;
-//   while (1 + start < end) {
-//     const mid = start + ((end - start) >> 1);
-//     if (pred(array[mid])) {
-//       end = mid;
-//     } else {
-//       start = end;
-//     }
-//   }
-//   return end;
-// }
