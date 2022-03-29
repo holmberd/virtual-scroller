@@ -86,6 +86,49 @@ export default class VirtualScroller extends HTMLElement {
     // this.observer && this.observer.disconnect();
   }
 
+  static get observedAttributes() {
+    return ['height', 'width'];
+  }
+
+  get height() {
+    return this.hasAttribute('height') && Number(this.getAttribute('height').replace('px', ''));
+  }
+
+  set height(val) {
+    if (val) {
+      this.setAttribute('height', val);
+    } else {
+      this.removeAttribute('height');
+    }
+  }
+
+  get width() {
+    return this.hasAttribute && this.getAttribute('width');
+  }
+
+  set width(val) {
+    if (val) {
+      this.setAttribute('width', val)
+    } else {
+      this.removeAttribute('width');
+    }
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === 'height') {
+      if (newValue !== oldValue) {
+        this.shadowRoot.adoptedStyleSheets[0].rules[0].style.height =
+          newValue.includes('px') ? newValue : `${newValue}px`;
+      }
+    }
+    if (name === 'width') {
+      if (newValue !== oldValue) {
+        this.shadowRoot.adoptedStyleSheets[0].rules[0].style.width =
+          newValue.includes('px') ? newValue : `${newValue}px`;
+      }
+    }
+  }
+
   /**
    * @public
    * @param {number} itemCount
