@@ -6,10 +6,11 @@ export { default } from './virtual-scroller';
 // const testButton = document.querySelector('#test-button');
 const virtualScroller = document.querySelector('virtual-scroller');
 
+const getItemHeight = (index) => index % 2 === 0 ? 50 : 100;
+
 const items = Array(1000).fill(true).map((_, index) => ({
   id: index,
-  // height: index % 2 === 0 ? 40 : 80,
-  height: 120,
+  height: getItemHeight(index),
 }));
 
 const itemList = (items) => html`
@@ -19,7 +20,7 @@ const itemList = (items) => html`
 `;
 
 // const itemList = (items) => html`
-//   ${items.map(item => html`<div class='row'>${item.id}`)}
+//   ${items.map(item => html`<div class='row' style="height:${item.height}px">${item.id}`)}
 // `;
 
 virtualScroller.addEventListener('visibleRangeChange', ({ detail: { startIndex, stopIndex } }) => {
@@ -29,10 +30,8 @@ virtualScroller.addEventListener('visibleRangeChange', ({ detail: { startIndex, 
 });
 
 // virtualScroller.itemCount = items.length;
-/* virtualScroller.init(items.length, (index) => {
-  return index % 2 === 0 ? 40 : 80; // row heights.
-}); */
+virtualScroller.init(items.length, getItemHeight);
 
-virtualScroller.init(items.length, (index) => {
-  return 120;
-});
+// virtualScroller.init(items.length, (index) => {
+//   return 120;
+// });

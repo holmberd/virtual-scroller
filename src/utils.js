@@ -7,3 +7,19 @@ export function throttle(fn, wait) {
     }
   }
 }
+
+/**
+ * Binary search.
+ */
+export function bSearch(array, pred, start = -1) {
+  let end = array.length;
+  while (start + 1 < end) {
+    const mid = start + ((end - start) >> 1);
+    if (pred(array[mid])) {
+      end = mid;
+    } else {
+      start = mid;
+    }
+  }
+  return end;
+}

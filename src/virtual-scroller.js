@@ -3,7 +3,7 @@ import { throttle } from './utils';
 // TODO
 // - Replace getItemsHeight with itemsHeightIndex.
 //  - change calcOverflow to use heightIndex if it's ready, perhaps build it right away?
-//    - getItemHeight can probably fetch from index if it's available.
+//    -  can probably fetch from index if it's available.
 // - Add tests.
 // TODO(dag): write scroll tests (replace/append items, no need to optimize).
 
@@ -11,12 +11,11 @@ const template = document.createElement('template');
 const listItemSheet = new CSSStyleSheet();
 listItemSheet.replaceSync(`
   :host {
-    contain: content;
     display: block;
     position: relative;
+    contain: content;
     overflow: scroll;
     overflow-x: hidden;
-    border: 1px solid black;
   }
   #top-overflow, #bottom-overflow {
     visibility: hidden;
@@ -47,19 +46,40 @@ export default class VirtualScroller extends HTMLElement {
     shadowRoot.appendChild(document.importNode(template.content, true));
     shadowRoot.adoptedStyleSheets = [listItemSheet];
 
-    this.totalItemsHeight = 0;
-    this.visibleOffset = 2;
-    this.observer = null;
+    this.itemCount = 0;
+    this.visibleOffset = 0;
     this.lastScrollPosition = 0;
     this.visibleStartIndex = 0;
     this.visibleStopIndex = 0;
-    this.clientHeightCache = 0;
-    this._itemCount = 0;
-    this.getItemHeight = () => 0;
+    this.observer = null;
+
+    this._itemsHeightIndex = [];
+    this._heightCache = 0;
+    this.calcItemHeight = () => 0;
+  }
+
+  get height() {
+    return this._heightCache || this.clientHeight;
+  }
+
+  set height(value) {
+    this._heightCache = value;
+  }
+
+  get itemsHeightIndex() {
+    return this._itemsHeightIndex;
+  }
+
+  set itemsHeightIndex(value) {
+    this._itemsHeightIndex = value;
+  }
+
+  getItemHeight(index) {
+    return this._itemsHeightIndex[index];
   }
 
   connectedCallback() {
-    this.clientHeightCache = this.clientHeight; // Cache this for calculations.
+    this.height = this.clientHeight; // Cache this for calculations.
     this.lastScrollPosition = this.scrollTop;
 
     const throttledHandleScroll = throttle(this.handleScroll.bind(this), 5);
@@ -86,57 +106,14 @@ export default class VirtualScroller extends HTMLElement {
     // this.observer && this.observer.disconnect();
   }
 
-  static get observedAttributes() {
-    return ['height', 'width'];
-  }
-
-  get height() {
-    return this.hasAttribute('height') && Number(this.getAttribute('height').replace('px', ''));
-  }
-
-  set height(val) {
-    if (val) {
-      this.setAttribute('height', val);
-    } else {
-      this.removeAttribute('height');
-    }
-  }
-
-  get width() {
-    return this.hasAttribute && this.getAttribute('width');
-  }
-
-  set width(val) {
-    if (val) {
-      this.setAttribute('width', val)
-    } else {
-      this.removeAttribute('width');
-    }
-  }
-
-  attributeChangedCallback(name, oldValue, newValue) {
-    if (name === 'height') {
-      if (newValue !== oldValue) {
-        this.shadowRoot.adoptedStyleSheets[0].rules[0].style.height =
-          newValue.includes('px') ? newValue : `${newValue}px`;
-      }
-    }
-    if (name === 'width') {
-      if (newValue !== oldValue) {
-        this.shadowRoot.adoptedStyleSheets[0].rules[0].style.width =
-          newValue.includes('px') ? newValue : `${newValue}px`;
-      }
-    }
-  }
-
   /**
    * @public
    * @param {number} itemCount
-   * @param {function} getItemHeight
+   * @param {function} calcItemHeight
    */
-  init(itemCount, getItemHeight) {
+  init(itemCount, calcItemHeight) {
     this.itemCount = itemCount;
-    this.getItemHeight = getItemHeight;
+    this.calcItemHeight = calcItemHeight;
     this.itemsHeightIndex = this.buildItemsHeightIndex(itemCount);
     this.update();
   }
@@ -145,7 +122,7 @@ export default class VirtualScroller extends HTMLElement {
    * @public
    */
   resetItemsHeightIndex() {
-    this.itemsHeightIndex = this.buildItemsHeightIndex(this.itemCount, this.getItemHeight);
+    this.itemsHeightIndex = this.buildItemsHeightIndex(this.itemCount);
     this.update();
   }
 
@@ -158,10 +135,10 @@ export default class VirtualScroller extends HTMLElement {
     const itemsHeightCache = [];
     for (let i = 0; i < itemCount; i++) {
       if (!i) {
-        itemsHeightCache[i] = this.getItemHeight(i);
+        itemsHeightCache[i] = this.calcItemHeight(i);
         continue;
       }
-      itemsHeightCache[i] = itemsHeightCache[i - 1] + this.getItemHeight(i);
+      itemsHeightCache[i] = itemsHeightCache[i - 1] + this.calcItemHeight(i);
     }
 
     return itemsHeightCache;
@@ -171,23 +148,23 @@ export default class VirtualScroller extends HTMLElement {
    * @private
    */
   update() {
-    const [startIndex, stopIndex] = this.calcVisibleItems();
+    const [startIndex, stopIndex] = this.calcVisibleItems(this.scrollTop);
     this.updateVisibleItemIndexes(startIndex, stopIndex);
   }
 
 
   /**
-   * @private
+   * Calculates and returns the start and stop index for items visible within the clientHeight.
    * @param {number} scrollTop
    * @returns {[number, number]} [startIndex, stopIndex]
    */
-  calcVisibleItems(scrollTop = this.scrollTop) {
+  calcVisibleItems(scrollTop) {
     // Handles the initial case when scrollbar is at the top.
     if (!scrollTop) {
       let startIndex = 0;
       let stopIndex = startIndex;
       for (; stopIndex < this.itemCount; stopIndex++) {
-        if (this.itemsHeightIndex[stopIndex] > this.clientHeightCache) {
+        if (this.getItemHeight(stopIndex) > this.height) {
           break;
         }
       }
@@ -202,7 +179,7 @@ export default class VirtualScroller extends HTMLElement {
     const startIndex = bSearch(this.itemsHeightIndex, height => height > scrollTop);
     const stopIndex = bSearch(
       this.itemsHeightIndex,
-      height => height > scrollTop + this.clientHeightCache,
+      height => height > scrollTop + this.height,
       startIndex
     );
 
@@ -252,6 +229,7 @@ export default class VirtualScroller extends HTMLElement {
    */
   handleScroll(e) {
     const scrollTopOffset = this.scrollTop;
+    console.log(scrollTopOffset);
     const scrollDistance = scrollTopOffset - this.lastScrollPosition;
     const isScrollDirDown = scrollDistance > 0;
     this.lastScrollPosition = scrollTopOffset;
@@ -277,7 +255,7 @@ export default class VirtualScroller extends HTMLElement {
     if (startIndex > stopIndex) {
       throw Error('start index must come before stop index');
     }
-    return this.itemsHeightIndex[stopIndex] - (this.itemsHeightIndex[startIndex - 1] || 0);
+    return this.getItemHeight(stopIndex) - (this.getItemHeight(startIndex - 1) || 0);
   }
 
   /**
@@ -294,21 +272,21 @@ export default class VirtualScroller extends HTMLElement {
 
     // Handles the initial case when scrollbar is at the top.
     if (!scrollTopOffset && scrollDir === ScrollDir.DOWN) {
-      return [0, visibleItemsHeight - this.clientHeightCache];
+      return [0, visibleItemsHeight - this.height];
     }
 
-    const aboveVisibleItemsHeight = !this.visibleStartIndex ? 0 : this.itemsHeightIndex[this.visibleStartIndex - 1];
+    const aboveVisibleItemsHeight = !this.visibleStartIndex ? 0 : this.getItemHeight(this.visibleStartIndex - 1);
     const firstVisibleItemTopOffset = scrollTopOffset - aboveVisibleItemsHeight;
-    const lastVisibleItemBottomOffset = visibleItemsHeight - this.clientHeightCache - firstVisibleItemTopOffset;
+    const lastVisibleItemBottomOffset = visibleItemsHeight - this.height - firstVisibleItemTopOffset;
 
     if (scrollDir === ScrollDir.UP) {
       return [
         firstVisibleItemTopOffset,
-        this.itemsHeightIndex[this.visibleStopIndex] - lastVisibleItemBottomOffset
+        this.getItemHeight(this.visibleStopIndex) - lastVisibleItemBottomOffset
       ];
     }
 
-    const topScrollThreshold = this.itemsHeightIndex[this.visibleStartIndex] - firstVisibleItemTopOffset;
+    const topScrollThreshold = this.getItemHeight(this.visibleStartIndex) - firstVisibleItemTopOffset;
     return [topScrollThreshold, lastVisibleItemBottomOffset];
   }
 
@@ -331,7 +309,7 @@ export default class VirtualScroller extends HTMLElement {
    */
   calcScrollOverflow(startIndex, stopIndex) {
     const beforeVisibleItemsHeight = startIndex <= 0
-      ? 0 : this.itemsHeightIndex[startIndex - 1];
+      ? 0 : this.getItemHeight(startIndex - 1);
 
     const afterVisibleItemsHeight = stopIndex >= this.itemCount - 1
       ? 0 : this.calcHeightBetween(stopIndex + 1, this.itemCount - 1);
