@@ -1,4 +1,5 @@
 import { bSearch } from './utils';
+import { ScrollDir } from './types';
 
 /**
  * Calculates and returns the start and stop index for items visible within the clientHeight.
@@ -50,7 +51,7 @@ function getItemScrollTop(itemsHeightIndex, index) {
  * Calculates height between to indexes.
  * @returns {number}
  */
-export function calcHeightBetween(itemsHeightIndex, startIndex, stopIndex) {
+function calcHeightBetween(itemsHeightIndex, startIndex, stopIndex) {
   if (startIndex > stopIndex) {
     throw Error('start index must come before stop index');
   }
@@ -65,10 +66,10 @@ export function calcHeightBetween(itemsHeightIndex, startIndex, stopIndex) {
 export function calcScrollThresholds(
   itemsHeightIndex,
   clientHeight,
-  scrollDir = ScrollDir.DOWN,
-  scrollTopOffset,
   startIndex,
-  stopIndex
+  stopIndex,
+  scrollDir = ScrollDir.DOWN,
+  scrollTopOffset
 ) {
   const visibleItemsHeight = calcHeightBetween(itemsHeightIndex, startIndex, stopIndex);
 
