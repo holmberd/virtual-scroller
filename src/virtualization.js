@@ -9,13 +9,13 @@ export const ScrollDir = {
  * Calculates and returns the start and stop index for items visible within the clientHeight.
  * @returns {[number, number]} [startIndex, stopIndex]
  */
-export function calcVisibleItems(scrollTop, itemCount, clientHeight, itemsHeightIndex) {
+export function calcVisibleItems(itemsScrollIndex, itemCount, clientHeight, scrollTop) {
   // Handles the initial case when scrollbar is at the top.
   if (!scrollTop) {
     let startIndex = 0;
     let stopIndex = startIndex;
     for (; stopIndex < itemCount; stopIndex++) {
-      if (getItemScrollTop(itemsHeightIndex, stopIndex) > clientHeight) {
+      if (getItemScrollTopOffset(itemsScrollIndex, stopIndex) > clientHeight) {
         break;
       }
     }
@@ -28,11 +28,11 @@ export function calcVisibleItems(scrollTop, itemCount, clientHeight, itemsHeight
 
   // Otherwise find startIndex using binary-search.
   const startIndex = bSearch(
-    itemsHeightIndex,
+    itemsScrollIndex,
     height => height > scrollTop
   );
   const stopIndex = bSearch(
-    itemsHeightIndex,
+    itemsScrollIndex,
     height => height > scrollTop + clientHeight,
     startIndex
   );
@@ -49,32 +49,32 @@ export function calcVisibleItems(scrollTop, itemCount, clientHeight, itemsHeight
  * @returns {[number, number]} [top, bottom]
  */
 export function calcScrollThresholds(
-  itemsHeightIndex,
+  itemsScrollIndex,
   clientHeight,
   startIndex,
   stopIndex,
   scrollDir = ScrollDir.DOWN,
   scrollTopOffset
 ) {
-  const visibleItemsHeight = calcHeightBetween(itemsHeightIndex, startIndex, stopIndex);
+  const visibleItemsHeight = calcHeightBetween(itemsScrollIndex, startIndex, stopIndex);
 
   // Handles the initial case when scrollbar is at the top.
   if (!scrollTopOffset && scrollDir === ScrollDir.DOWN) {
     return [0, visibleItemsHeight - clientHeight];
   }
 
-  const aboveVisibleItemsHeight = !startIndex ? 0 : getItemScrollTop(itemsHeightIndex, startIndex - 1);
+  const aboveVisibleItemsHeight = !startIndex ? 0 : getItemScrollTopOffset(itemsScrollIndex, startIndex - 1);
   const firstVisibleItemTopOffset = scrollTopOffset - aboveVisibleItemsHeight;
   const lastVisibleItemBottomOffset = visibleItemsHeight - clientHeight - firstVisibleItemTopOffset;
 
   if (scrollDir === ScrollDir.UP) {
     return [
       firstVisibleItemTopOffset,
-      getItemScrollTop(itemsHeightIndex, stopIndex) - lastVisibleItemBottomOffset
+      getItemScrollTopOffset(itemsScrollIndex, stopIndex) - lastVisibleItemBottomOffset
     ];
   }
 
-  const topScrollThreshold = getItemScrollTop(itemsHeightIndex, startIndex) - firstVisibleItemTopOffset;
+  const topScrollThreshold = getItemScrollTopOffset(itemsScrollIndex, startIndex) - firstVisibleItemTopOffset;
   return [topScrollThreshold, lastVisibleItemBottomOffset];
 }
 
@@ -82,12 +82,12 @@ export function calcScrollThresholds(
  * Calculates scroll before/after visible items scroll overflow.
  * @returns {[number, number]} [before, after]
  */
-export function calcScrollOverflow(itemsHeightIndex, itemCount, startIndex, stopIndex) {
+export function calcScrollOverflow(itemsScrollIndex, itemCount, startIndex, stopIndex) {
   const beforeVisibleItemsHeight = startIndex <= 0
-    ? 0 : getItemScrollTop(itemsHeightIndex, startIndex - 1);
+    ? 0 : getItemScrollTopOffset(itemsScrollIndex, startIndex - 1);
 
   const afterVisibleItemsHeight = stopIndex >= itemCount - 1
-    ? 0 : calcHeightBetween(itemsHeightIndex, stopIndex + 1, itemCount - 1);
+    ? 0 : calcHeightBetween(itemsScrollIndex, stopIndex + 1, itemCount - 1);
 
   return [beforeVisibleItemsHeight, afterVisibleItemsHeight];
 }
@@ -96,17 +96,18 @@ export function calcScrollOverflow(itemsHeightIndex, itemCount, startIndex, stop
  * Returns scroll top offset for the item at the specified index.
  * @returns {number|undefined}
  */
-function getItemScrollTop(itemsHeightIndex, index) {
-  return itemsHeightIndex[index];
+function getItemScrollTopOffset(itemsScrollIndex, index) {
+  return itemsScrollIndex[index];
 }
 
 /**
  * Calculates height between to indexes.
  * @returns {number}
  */
-function calcHeightBetween(itemsHeightIndex, startIndex, stopIndex) {
+function calcHeightBetween(itemsScrollIndex, startIndex, stopIndex) {
   if (startIndex > stopIndex) {
     throw Error('start index must come before stop index');
   }
-  return getItemScrollTop(itemsHeightIndex, stopIndex) - (getItemScrollTop(itemsHeightIndex, startIndex - 1) || 0);
+  return getItemScrollTopOffset(itemsScrollIndex, stopIndex)
+    - (getItemScrollTopOffset(itemsScrollIndex, startIndex - 1) || 0);
 }

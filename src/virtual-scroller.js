@@ -47,13 +47,13 @@ export default class VirtualScroller extends HTMLElement {
     this.visibleStopIndex = 0;
     this.observer = null;
 
-    this._itemsHeightIndex = [];
+    this._itemsScrollIndex = [];
     this._clientHeightCache = 0;
     this._calcItemHeight = () => 0;
   }
 
   get calcItemHeight() {
-    return this._calcItemHeight();
+    return this._calcItemHeight;
   }
 
   set calcItemHeight(fn) {
@@ -68,12 +68,12 @@ export default class VirtualScroller extends HTMLElement {
     this._clientHeightCache = value;
   }
 
-  get itemsHeightIndex() {
-    return this._itemsHeightIndex;
+  get itemsScrollIndex() {
+    return this._itemsScrollIndex;
   }
 
-  set itemsHeightIndex(value) {
-    this._itemsHeightIndex = value;
+  set itemsScrollIndex(value) {
+    this._itemsScrollIndex = value;
   }
 
   connectedCallback() {
@@ -112,15 +112,15 @@ export default class VirtualScroller extends HTMLElement {
   init(itemCount, calcItemHeight) {
     this.itemCount = itemCount;
     this.calcItemHeight = calcItemHeight;
-    this.itemsHeightIndex = this.buildItemsHeightIndex(itemCount);
+    this.itemsScrollIndex = this.buildItemsScrollIndex();
     this.update();
   }
 
   /**
    * @public
    */
-  resetItemsHeightIndex() {
-    this.itemsHeightIndex = this.buildItemsHeightIndex(this.itemCount);
+  resetItemsScrollIndex() {
+    this.itemsScrollIndex = this.buildItemsScrollIndex();
     this.update();
   }
 
@@ -129,10 +129,10 @@ export default class VirtualScroller extends HTMLElement {
    */
   update() {
     const [startIndex, stopIndex] = calcVisibleItems(
-      this.scrollTop,
+      this.itemsScrollIndex,
       this.itemCount,
       this.height,
-      this.itemsHeightIndex
+      this.scrollTop
     );
     this.updateVisibleItemIndexes(startIndex, stopIndex);
   }
@@ -142,9 +142,9 @@ export default class VirtualScroller extends HTMLElement {
    * @param {number} itemCount
    * @returns {number[]}
    */
-  buildItemsHeightIndex(itemCount) {
+  buildItemsScrollIndex() {
     const itemsHeightCache = [];
-    for (let i = 0; i < itemCount; i++) {
+    for (let i = 0; i < this.itemCount; i++) {
       if (!i) {
         itemsHeightCache[i] = this.calcItemHeight(i);
         continue;
@@ -203,7 +203,7 @@ export default class VirtualScroller extends HTMLElement {
       topThreshold,
       bottomThreshold
     ] = calcScrollThresholds(
-      this.itemsHeightIndex,
+      this.itemsScrollIndex,
       this.height,
       this.visibleStartIndex,
       this.visibleStopIndex,
@@ -216,7 +216,7 @@ export default class VirtualScroller extends HTMLElement {
         scrollTopOffset,
         this.itemCount,
         this.height,
-        this.itemsHeightIndex
+        this.itemsScrollIndex
       );
       this.updateVisibleItemIndexes(startIndex, stopIndex);
     }
@@ -229,7 +229,7 @@ export default class VirtualScroller extends HTMLElement {
    */
   updateScrollOverflow(startIndex, stopIndex) {
     const [topOverflowHeight, bottomOverflowHeight] = calcScrollOverflow(
-      this.itemsHeightIndex,
+      this.itemsScrollIndex,
       this.itemCount,
       startIndex,
       stopIndex
