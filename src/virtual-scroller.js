@@ -1,9 +1,10 @@
 import {
   ScrollDir,
+  buildItemsScrollIndex,
   calcVisibleItems,
   calcScrollThresholds,
   calcScrollOverflow,
-} from './virtualization';
+} from './vertical-virtualization';
 import { throttle } from './utils';
 
 const template = document.createElement('template');
@@ -112,7 +113,7 @@ export default class VirtualScroller extends HTMLElement {
   init(itemCount, calcItemHeight) {
     this.itemCount = itemCount;
     this.calcItemHeight = calcItemHeight;
-    this.itemsScrollIndex = this.buildItemsScrollIndex();
+    this.itemsScrollIndex = buildItemsScrollIndex(this.itemCount, this.calcItemHeight);
     this.update();
   }
 
@@ -120,7 +121,7 @@ export default class VirtualScroller extends HTMLElement {
    * @public
    */
   resetItemsScrollIndex() {
-    this.itemsScrollIndex = this.buildItemsScrollIndex();
+    this.itemsScrollIndex = buildItemsScrollIndex(this.itemCount, this.calcItemHeight);
     this.update();
   }
 
@@ -135,24 +136,6 @@ export default class VirtualScroller extends HTMLElement {
       this.scrollTop
     );
     this.updateVisibleItemIndexes(startIndex, stopIndex);
-  }
-
-  /**
-   * @private
-   * @param {number} itemCount
-   * @returns {number[]}
-   */
-  buildItemsScrollIndex() {
-    const itemsHeightCache = [];
-    for (let i = 0; i < this.itemCount; i++) {
-      if (!i) {
-        itemsHeightCache[i] = this.calcItemHeight(i);
-        continue;
-      }
-      itemsHeightCache[i] = itemsHeightCache[i - 1] + this.calcItemHeight(i);
-    }
-
-    return itemsHeightCache;
   }
 
   /**
@@ -194,7 +177,6 @@ export default class VirtualScroller extends HTMLElement {
    */
   handleScroll(e) {
     const scrollTopOffset = this.scrollTop;
-    console.log(scrollTopOffset);
     const scrollDistance = scrollTopOffset - this.lastScrollPosition;
     const isScrollDirDown = scrollDistance > 0;
     this.lastScrollPosition = scrollTopOffset;

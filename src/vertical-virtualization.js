@@ -6,6 +6,24 @@ export const ScrollDir = {
 };
 
 /**
+ * Builds and returns an item scroll top offset index.
+ * An index represents the scrollTop being at the bottom of the item.
+ * @returns {number[]}
+ */
+export function buildItemsScrollIndex(itemCount, getItemHeight) {
+  const itemsHeightCache = [];
+  for (let i = 0; i < itemCount; i++) {
+    if (!i) {
+      itemsHeightCache[i] = getItemHeight(i);
+      continue;
+    }
+    itemsHeightCache[i] = itemsHeightCache[i - 1] + getItemHeight(i);
+  }
+
+  return itemsHeightCache;
+}
+
+/**
  * Calculates and returns the start and stop index for items visible within the clientHeight.
  * @returns {[number, number]} [startIndex, stopIndex]
  */
