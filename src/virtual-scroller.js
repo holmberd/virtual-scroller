@@ -1,10 +1,10 @@
 import {
+  ScrollDir,
   calcVisibleItems,
   calcScrollThresholds,
   calcScrollOverflow,
 } from './virtualization';
 import { throttle } from './utils';
-import { ScrollDir } from './types';
 
 const template = document.createElement('template');
 const listItemSheet = new CSSStyleSheet();

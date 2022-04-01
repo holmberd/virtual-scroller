@@ -1,5 +1,9 @@
 import { bSearch } from './utils';
-import { ScrollDir } from './types';
+
+export const ScrollDir = {
+  DOWN: 'down',
+  UP: 'up',
+};
 
 /**
  * Calculates and returns the start and stop index for items visible within the clientHeight.
@@ -37,25 +41,6 @@ export function calcVisibleItems(scrollTop, itemCount, clientHeight, itemsHeight
     startIndex,
     stopIndex,
   ];
-}
-
-/**
- * Returns scroll top offset for the item at the specified index.
- * @returns {number|undefined}
- */
-function getItemScrollTop(itemsHeightIndex, index) {
-  return itemsHeightIndex[index];
-}
-
-/**
- * Calculates height between to indexes.
- * @returns {number}
- */
-function calcHeightBetween(itemsHeightIndex, startIndex, stopIndex) {
-  if (startIndex > stopIndex) {
-    throw Error('start index must come before stop index');
-  }
-  return getItemScrollTop(itemsHeightIndex, stopIndex) - (getItemScrollTop(itemsHeightIndex, startIndex - 1) || 0);
 }
 
 /**
@@ -105,4 +90,23 @@ export function calcScrollOverflow(itemsHeightIndex, itemCount, startIndex, stop
     ? 0 : calcHeightBetween(itemsHeightIndex, stopIndex + 1, itemCount - 1);
 
   return [beforeVisibleItemsHeight, afterVisibleItemsHeight];
+}
+
+/**
+ * Returns scroll top offset for the item at the specified index.
+ * @returns {number|undefined}
+ */
+function getItemScrollTop(itemsHeightIndex, index) {
+  return itemsHeightIndex[index];
+}
+
+/**
+ * Calculates height between to indexes.
+ * @returns {number}
+ */
+function calcHeightBetween(itemsHeightIndex, startIndex, stopIndex) {
+  if (startIndex > stopIndex) {
+    throw Error('start index must come before stop index');
+  }
+  return getItemScrollTop(itemsHeightIndex, stopIndex) - (getItemScrollTop(itemsHeightIndex, startIndex - 1) || 0);
 }
