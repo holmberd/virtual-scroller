@@ -9,13 +9,14 @@ export function throttle(fn, wait) {
 }
 
 /**
- * Binary search.
+ * Performs a binary-search on the array by testing
+ * each element in the array against the provided function.
  */
-export function bSearch(array, pred, start = -1) {
-  let end = array.length;
+export function bSearch(array, callback, start = -1) {
+  let end = array.length - 1;
   while (start + 1 < end) {
     const mid = start + ((end - start) >> 1);
-    if (pred(array[mid])) {
+    if (callback(array[mid])) {
       end = mid;
     } else {
       start = mid;
