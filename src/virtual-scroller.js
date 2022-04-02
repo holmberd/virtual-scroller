@@ -107,8 +107,6 @@ export default class VirtualScroller extends HTMLElement {
 
   /**
    * @public
-   * @param {number} itemCount
-   * @param {function} calcItemHeight
    */
   init(itemCount, calcItemHeight) {
     this.itemCount = itemCount;
@@ -139,9 +137,6 @@ export default class VirtualScroller extends HTMLElement {
   }
 
   /**
-   * @private
-   * @param {number} startIndex
-   * @param {number} stopIndex
    * @emits visibleRangeChange
    */
   updateVisibleItemIndexes(startIndex, stopIndex) {
@@ -172,9 +167,6 @@ export default class VirtualScroller extends HTMLElement {
     );
   }
 
-  /**
-   * @private
-   */
   handleScroll(e) {
     const scrollTopOffset = this.scrollTop;
     const scrollDistance = scrollTopOffset - this.lastScrollPosition;
@@ -204,11 +196,6 @@ export default class VirtualScroller extends HTMLElement {
     }
   }
 
-  /**
-   * @private
-   * @param {number} startIndex
-   * @param {number} stopIndex
-   */
   updateScrollOverflow(startIndex, stopIndex) {
     const [topOverflowHeight, bottomOverflowHeight] = calcScrollOverflow(
       this.itemsScrollIndex,
@@ -220,19 +207,11 @@ export default class VirtualScroller extends HTMLElement {
     this.setBottomOverflowHeight(bottomOverflowHeight);
   }
 
-  /**
-   * @private
-   * @param {number} height
-   */
   setBottomOverflowHeight(height) {
     const bottomOverflowElement = this.shadowRoot.querySelector('#bottom-overflow');
     bottomOverflowElement.style.height = `${Math.max(0, height)}px`;
   }
 
-  /**
-   * @private
-   * @param {number} height
-   */
   setTopOverflowHeight(height) {
     const topOverflowElement = this.shadowRoot.querySelector('#top-overflow');
     topOverflowElement.style.height = `${Math.max(0, height)}px`;
