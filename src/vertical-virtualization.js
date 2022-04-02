@@ -113,18 +113,10 @@ export function calcScrollOverflow(itemsScrollIndex, startIndex, stopIndex) {
 }
 
 /**
- * Returns scroll top offset for the item at the specified index.
- * @returns {number}
- */
-function getItemScrollTopOffset(itemsScrollIndex, index) {
-  return itemsScrollIndex[index] || 0;
-}
-
-/**
  * Calculates height between to indexes.
  * @returns {number}
  */
-function calcHeightBetween(itemsScrollIndex, startIndex, stopIndex) {
+export function calcHeightBetween(itemsScrollIndex, startIndex, stopIndex) {
   if (startIndex > stopIndex) {
     throw Error('start index must come before stop index');
   }
@@ -132,4 +124,15 @@ function calcHeightBetween(itemsScrollIndex, startIndex, stopIndex) {
   const startIndexScrollTopOffset = getItemScrollTopOffset(itemsScrollIndex, startIndex - 1);
 
   return stopIndexScrollTopOffset - startIndexScrollTopOffset;
+}
+
+/**
+ * Returns scroll top offset for the item at the specified index.
+ * @returns {number}
+ */
+function getItemScrollTopOffset(itemsScrollIndex, index) {
+  if (!itemsScrollIndex) {
+    throw Error('Missing items scroll index');
+  }
+  return itemsScrollIndex[index] || 0;
 }
