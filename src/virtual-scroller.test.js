@@ -21,6 +21,8 @@ describe('virtual-scroller tests', () => {
     }));
   })
 
+  // afterAll(() => {});
+
   beforeEach(() => {
     const virtualScroller = new VirtualScroller();
     document.body.appendChild(virtualScroller);
@@ -45,22 +47,12 @@ describe('virtual-scroller tests', () => {
       }
       events[event.type](event);
     });
-
-    // jest.spyOn(virtualScrollerEl, 'clientHeight', 'get').mockImplementation(() => VIRTUAL_SCROLLER_HEIGHT);
-    // jest.spyOn(virtualScrollerEl, 'clientWidth', 'get').mockImplementation(() => VIRTUAL_SCROLLER_WIDTH);
-    // jest.spyOn(virtualScrollerEl, 'scrollTop').mockImplementation(() => 0);
-    // Object.defineProperty(virtualScrollerEl, 'clientHeight', {
-    //   writable: false,
-    //   value: 200,
-    // });
   });
 
   afterEach(() => {
     events = {};
     document.querySelector('virtual-scroller').remove();
   });
-
-  // afterAll(() => {});
 
   it('should be rendered in the DOM', () => {
     expect(document.querySelector('virtual-scroller')).toBeTruthy();
@@ -85,56 +77,4 @@ describe('virtual-scroller tests', () => {
 
     virtualScroller.init(items.length, getItemHeight);
   });
-
-  it('should calculate the range of visible items when scrolling down 49px', (done) => {
-    const virtualScroller = document.querySelector('virtual-scroller');
-    virtualScroller.scrollTop = 49;
-
-    virtualScroller.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
-      // 100 + 50 + 100 + 50 + 100 = 400
-      expect(startIndex).toBe(0);
-      expect(stopIndex).toBe(5);
-      done();
-    });
-    virtualScroller.init(items.length, getItemHeight);
-  });
-
-  it('should calculate the range of visible items when scrolling down 50px', (done) => {
-    const virtualScroller = document.querySelector('virtual-scroller');
-    virtualScroller.scrollTop = 50;
-
-    virtualScroller.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
-      // 100 + 50 + 100 + 50 + 100 = 400
-      expect(startIndex).toBe(1);
-      expect(stopIndex).toBe(6);
-      done();
-    });
-    virtualScroller.init(items.length, getItemHeight);
-  });
-
-  it('should calculate the range of visible items when scrolling down 100px', (done) => {
-    const virtualScroller = document.querySelector('virtual-scroller');
-    virtualScroller.scrollTop = 100;
-
-    virtualScroller.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
-      expect(startIndex).toBe(1);
-      expect(stopIndex).toBe(7);
-      done();
-    });
-    virtualScroller.init(items.length, getItemHeight);
-  });
-
-  it('should calculate the range of visible items when scrolling down to bottom', (done) => {
-    const virtualScroller = document.querySelector('virtual-scroller');
-    virtualScroller.scrollTop = 74600;
-
-    virtualScroller.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
-      expect(startIndex).toBe(995);
-      expect(stopIndex).toBe(1000);
-      done();
-    });
-    virtualScroller.init(items.length, getItemHeight);
-  });
-
-
 });
