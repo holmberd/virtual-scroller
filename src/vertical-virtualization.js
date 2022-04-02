@@ -82,7 +82,7 @@ export function calcScrollThresholds(
     return [0, visibleItemsHeight - clientHeight];
   }
 
-  const aboveVisibleItemsHeight = !startIndex ? 0 : getItemScrollTopOffset(itemsScrollIndex, startIndex - 1);
+  const aboveVisibleItemsHeight = getItemScrollTopOffset(itemsScrollIndex, startIndex - 1);
   const firstVisibleItemTopOffset = scrollTopOffset - aboveVisibleItemsHeight;
   const lastVisibleItemBottomOffset = visibleItemsHeight - clientHeight - firstVisibleItemTopOffset;
 
@@ -104,8 +104,7 @@ export function calcScrollThresholds(
 export function calcScrollOverflow(itemsScrollIndex, startIndex, stopIndex) {
   const itemCount = itemsScrollIndex.length;
 
-  const beforeVisibleItemsHeight = startIndex <= 0
-    ? 0 : getItemScrollTopOffset(itemsScrollIndex, startIndex - 1);
+  const beforeVisibleItemsHeight = getItemScrollTopOffset(itemsScrollIndex, startIndex - 1);
 
   const afterVisibleItemsHeight = stopIndex >= itemCount - 1
     ? 0 : calcHeightBetween(itemsScrollIndex, stopIndex + 1, itemCount - 1);
@@ -115,10 +114,10 @@ export function calcScrollOverflow(itemsScrollIndex, startIndex, stopIndex) {
 
 /**
  * Returns scroll top offset for the item at the specified index.
- * @returns {number|undefined}
+ * @returns {number}
  */
 function getItemScrollTopOffset(itemsScrollIndex, index) {
-  return itemsScrollIndex[index];
+  return itemsScrollIndex[index] || 0;
 }
 
 /**
@@ -129,6 +128,8 @@ function calcHeightBetween(itemsScrollIndex, startIndex, stopIndex) {
   if (startIndex > stopIndex) {
     throw Error('start index must come before stop index');
   }
-  return getItemScrollTopOffset(itemsScrollIndex, stopIndex)
-    - (getItemScrollTopOffset(itemsScrollIndex, startIndex - 1) || 0);
+  const stopIndexScrollTopOffset = getItemScrollTopOffset(itemsScrollIndex, stopIndex);
+  const startIndexScrollTopOffset = getItemScrollTopOffset(itemsScrollIndex, startIndex - 1);
+
+  return stopIndexScrollTopOffset - startIndexScrollTopOffset;
 }
