@@ -63,7 +63,7 @@ export function calcVisibleItems(itemsScrollIndex, clientHeight, scrollTop) {
 }
 
 /**
- * Returns thresholds for scrolldistance required to bring top or bottom item
+ * Returns thresholds for the scroll distance required to bring top or bottom item
  * fully inside or outside the element viewport.
  * @returns {[number, number]} [top, bottom]
  */
