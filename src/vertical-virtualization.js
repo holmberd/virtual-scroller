@@ -27,11 +27,12 @@ export function buildItemsScrollIndex(itemCount, getItemHeight) {
  * Calculates and returns the start and stop index for items visible within the clientHeight.
  * @returns {[number, number]} [startIndex, stopIndex]
  */
-export function calcVisibleItems(itemsScrollIndex, itemCount, clientHeight, scrollTop) {
+export function calcVisibleItems(itemsScrollIndex, clientHeight, scrollTop) {
   // Handles the initial case when scrollbar is at the top.
   if (!scrollTop) {
     let startIndex = 0;
     let stopIndex = startIndex;
+    const itemCount = itemsScrollIndex.length;
     for (; stopIndex < itemCount; stopIndex++) {
       if (getItemScrollTopOffset(itemsScrollIndex, stopIndex) > clientHeight) {
         break;
@@ -100,7 +101,9 @@ export function calcScrollThresholds(
  * Calculates scroll before/after visible items scroll overflow.
  * @returns {[number, number]} [before, after]
  */
-export function calcScrollOverflow(itemsScrollIndex, itemCount, startIndex, stopIndex) {
+export function calcScrollOverflow(itemsScrollIndex, startIndex, stopIndex) {
+  const itemCount = itemsScrollIndex.length;
+
   const beforeVisibleItemsHeight = startIndex <= 0
     ? 0 : getItemScrollTopOffset(itemsScrollIndex, startIndex - 1);
 

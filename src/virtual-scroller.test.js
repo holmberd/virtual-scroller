@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import VirtualScroller from '../virtual-scroller';
+import VirtualScroller from './virtual-scroller';
 
 const VIRTUAL_SCROLLER_HEIGHT = 400;
 const VIRTUAL_SCROLLER_WIDTH = 400;

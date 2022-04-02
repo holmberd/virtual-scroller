@@ -108,6 +108,7 @@ export default class VirtualScroller extends HTMLElement {
   /**
    * @public
    */
+  // TODO: reset scrollIndex on itemcount update.
   init(itemCount, calcItemHeight) {
     this.itemCount = itemCount;
     this.calcItemHeight = calcItemHeight;
@@ -129,7 +130,6 @@ export default class VirtualScroller extends HTMLElement {
   update() {
     const [startIndex, stopIndex] = calcVisibleItems(
       this.itemsScrollIndex,
-      this.itemCount,
       this.height,
       this.scrollTop
     );
@@ -187,10 +187,9 @@ export default class VirtualScroller extends HTMLElement {
 
     if (bottomThreshold < 0 || topThreshold < 0) {
       const [startIndex, stopIndex] = calcVisibleItems(
-        scrollTopOffset,
-        this.itemCount,
+        this.itemsScrollIndex,
         this.height,
-        this.itemsScrollIndex
+        scrollTopOffset
       );
       this.updateVisibleItemIndexes(startIndex, stopIndex);
     }
@@ -199,7 +198,6 @@ export default class VirtualScroller extends HTMLElement {
   updateScrollOverflow(startIndex, stopIndex) {
     const [topOverflowHeight, bottomOverflowHeight] = calcScrollOverflow(
       this.itemsScrollIndex,
-      this.itemCount,
       startIndex,
       stopIndex
     );
