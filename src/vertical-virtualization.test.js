@@ -58,7 +58,7 @@ describe('Vertical virtualization calculation tests', () => {
     scrollTop = SCROLL_TOP_MAX;
     [startIndex, stopIndex] = calcVisibleItems(itemsScrollIndex, CLIENT_HEIGHT, scrollTop);
     expect(startIndex).toBe(995);
-    expect(stopIndex).toBe(1000);
+    expect(stopIndex).toBe(999);
   });
 
   it('should calculate height between items', () => {
@@ -84,13 +84,16 @@ describe('Vertical virtualization calculation tests', () => {
       .toBe(calcHeightBetween(itemsScrollIndex, startIndex, stopIndex));
     expect(SCROLL_HEIGHT).toBe(calcHeightBetween(itemsScrollIndex, startIndex, stopIndex));
 
-    startIndex = -2, stopIndex = -1;
-    expect(0).toBe(calcHeightBetween(itemsScrollIndex, startIndex, stopIndex));
-
+    // Negative start.
     startIndex = -1, stopIndex = 1;
-    expect(0).toBe(calcHeightBetween(itemsScrollIndex, startIndex, stopIndex));
+    expect(() => calcHeightBetween(itemsScrollIndex, startIndex, stopIndex)).toThrow();
 
     // Reverse.
+    startIndex = 1, stopIndex = 2;
+    expect(() => calcHeightBetween(itemsScrollIndex, stopIndex, startIndex)).toThrow();
+
+    // Overflow stop.
+    startIndex = 995, stopIndex = 1500;
     expect(() => calcHeightBetween(itemsScrollIndex, stopIndex, startIndex)).toThrow();
   });
 
@@ -107,9 +110,25 @@ describe('Vertical virtualization calculation tests', () => {
 
     startIndex = 1, stopIndex = 6;
     [above, below] = calcScrollOverflow(itemsScrollIndex, startIndex, stopIndex);
-    expect(above).toBe(calcHeightBetween(itemsScrollIndex, startIndex - 1, startIndex - 1));
+    expect(above).toBe(calcHeightBetween(itemsScrollIndex, 0, startIndex - 1));
     expect(below).toBe(SCROLL_HEIGHT - calcHeightBetween(itemsScrollIndex, 0, stopIndex));
 
+    startIndex = 995, stopIndex = 999;
+    [above, below] = calcScrollOverflow(itemsScrollIndex, startIndex, stopIndex);
+    expect(above).toBe(calcHeightBetween(itemsScrollIndex, 0, startIndex - 1));
+    expect(below).toBe(0);
+
+    // Overflow stop.
+    startIndex = 995, stopIndex = 1500;
+    expect(() => calcScrollOverflow(itemsScrollIndex, startIndex, stopIndex)).toThrow();
+
+    // Reverse.
+    startIndex = 1, stopIndex = 2;
+    expect(() => calcScrollOverflow(itemsScrollIndex, stopIndex, startIndex)).toThrow();
+
+    // Negative start.
+    startIndex = -1, stopIndex = 1;
+    expect(() => calcScrollOverflow(itemsScrollIndex, stopIndex, startIndex)).toThrow();
   });
 
   // it('should calculate scroll thresholds', () => { });

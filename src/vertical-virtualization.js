@@ -103,9 +103,9 @@ export function calcScrollThresholds(
  */
 export function calcScrollOverflow(itemsScrollIndex, startIndex, stopIndex) {
   const itemCount = itemsScrollIndex.length;
+  validateIndexes(itemCount, startIndex, stopIndex);
 
   const beforeVisibleItemsHeight = getItemScrollTopOffset(itemsScrollIndex, startIndex - 1);
-
   const afterVisibleItemsHeight = stopIndex >= itemCount - 1
     ? 0 : calcHeightBetween(itemsScrollIndex, stopIndex + 1, itemCount - 1);
 
@@ -117,9 +117,8 @@ export function calcScrollOverflow(itemsScrollIndex, startIndex, stopIndex) {
  * @returns {number}
  */
 export function calcHeightBetween(itemsScrollIndex, startIndex, stopIndex) {
-  if (startIndex > stopIndex) {
-    throw Error('start index must come before stop index');
-  }
+  validateIndexes(itemsScrollIndex.length, startIndex, stopIndex);
+
   const stopIndexScrollTopOffset = getItemScrollTopOffset(itemsScrollIndex, stopIndex);
   const startIndexScrollTopOffset = getItemScrollTopOffset(itemsScrollIndex, startIndex - 1);
 
@@ -135,4 +134,14 @@ function getItemScrollTopOffset(itemsScrollIndex, index) {
     throw Error('Missing items scroll index');
   }
   return itemsScrollIndex[index] || 0;
+}
+
+function validateIndexes(itemCount, startIndex, stopIndex) {
+  if (startIndex > stopIndex) {
+    throw Error('start index must come before stop index');
+  }
+  if (startIndex < 0 || stopIndex < 0 || stopIndex >= itemCount) {
+    throw Error('start/stop index must be > -1 and stop index < item count');
+  }
+  return true;
 }
