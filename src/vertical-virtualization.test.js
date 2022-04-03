@@ -121,7 +121,6 @@ describe('Vertical virtualization calculation tests', () => {
     });
   });
 
-  // TODO: consider overscan/offset indexes.
   describe('Calculate scroll overflow', () => {
     it('should calculate scroll overflow between indexes: [0, 0]', () => {
       const startIndex = 0, stopIndex = 0;
@@ -177,8 +176,8 @@ describe('Vertical virtualization calculation tests', () => {
     it('should calculate thresholds between indexes: [0, 5], scrollTop = 0 when scrolling down', () => {
       // total: 50 + 100 + 50 + 100 + 50 + 100 = 450
       // threshold: 450 - 400(client) = 50
-      let startIndex = 0, stopIndex = 5, scrollTop = 0;
-      let [top, bottom] = calcScrollThresholds(
+      const startIndex = 0, stopIndex = 5, scrollTop = 0;
+      const [top, bottom] = calcScrollThresholds(
         itemsScrollIndex,
         CLIENT_HEIGHT,
         startIndex,
@@ -190,9 +189,23 @@ describe('Vertical virtualization calculation tests', () => {
       expect(bottom).toBe(50);
     });
 
-    it('should calculate scroll thresholds between indexes: [0, 5] and scrollTop = 25 when scrolling down', () => {
-      startIndex = 0, stopIndex = 5, scrollTop = 25;
-      [top, bottom] = calcScrollThresholds(
+    it('should calculate thresholds between indexes: [0, 5], scrollTop = 0 when scrolling up', () => {
+      const startIndex = 0, stopIndex = 5, scrollTop = 0;
+      const [top, bottom] = calcScrollThresholds(
+        itemsScrollIndex,
+        CLIENT_HEIGHT,
+        startIndex,
+        stopIndex,
+        ScrollDir.UP,
+        scrollTop
+      );
+      expect(top).toBe(0);
+      expect(bottom).toBe(50);
+    });
+
+    it('should calculate thresholds between indexes: [0, 5] and scrollTop = 25 when scrolling down', () => {
+      const startIndex = 0, stopIndex = 5, scrollTop = 25;
+      const [top, bottom] = calcScrollThresholds(
         itemsScrollIndex,
         CLIENT_HEIGHT,
         startIndex,
@@ -204,23 +217,23 @@ describe('Vertical virtualization calculation tests', () => {
       expect(bottom).toBe(25);
     });
 
-    it('should calculate scroll thresholds between indexes: [0, 5] and scrollTop = 25 when scrolling down', () => {
-      startIndex = 0, stopIndex = 5, scrollTop = 25;
-      [top, bottom] = calcScrollThresholds(
+    it('should calculate thresholds between indexes: [0, 5] and scrollTop = 25 when scrolling up', () => {
+      const startIndex = 0, stopIndex = 5, scrollTop = 25;
+      const [top, bottom] = calcScrollThresholds(
         itemsScrollIndex,
         CLIENT_HEIGHT,
         startIndex,
         stopIndex,
-        ScrollDir.DOWN,
+        ScrollDir.UP,
         scrollTop
       );
       expect(top).toBe(25);
-      expect(bottom).toBe(25);
+      expect(bottom).toBe(75);
     });
 
-    it('should calculate scroll thresholds between indexes: [1, 7] and scrollTop = 125 when scrolling down', () => {
-      startIndex = 1, stopIndex = 7, scrollTop = 125;
-      [top, bottom] = calcScrollThresholds(
+    it('should calculate thresholds between indexes: [1, 7] and scrollTop = 125 when scrolling down', () => {
+      const startIndex = 1, stopIndex = 7, scrollTop = 125;
+      const [top, bottom] = calcScrollThresholds(
         itemsScrollIndex,
         CLIENT_HEIGHT,
         startIndex,
@@ -232,9 +245,9 @@ describe('Vertical virtualization calculation tests', () => {
       expect(bottom).toBe(75);
     });
 
-    it('should calculate scroll thresholds between indexes: [1, 7] and scrollTop = 125 when scrolling up', () => {
-      startIndex = 1, stopIndex = 7, scrollTop = 125;
-      [top, bottom] = calcScrollThresholds(
+    it('should calculate thresholds between indexes: [1, 7] and scrollTop = 125 when scrolling up', () => {
+      const startIndex = 1, stopIndex = 7, scrollTop = 125;
+      const [top, bottom] = calcScrollThresholds(
         itemsScrollIndex,
         CLIENT_HEIGHT,
         startIndex,
@@ -244,6 +257,62 @@ describe('Vertical virtualization calculation tests', () => {
       );
       expect(top).toBe(75);
       expect(bottom).toBe(25);
+    });
+
+    it('should calculate thresholds between indexes: [0, 5] and scrollTop = 250 when scrolling down', () => {
+      const startIndex = 0, stopIndex = 5, scrollTop = 250;
+      const [top, bottom] = calcScrollThresholds(
+        itemsScrollIndex,
+        CLIENT_HEIGHT,
+        startIndex,
+        stopIndex,
+        ScrollDir.DOWN,
+        scrollTop
+      );
+      expect(top).toBe(-200);
+      expect(bottom).toBe(-200);
+    });
+
+    it('should calculate thresholds between indexes: [995, 999] and scrollTop = bottom when scrolling down', () => {
+      const startIndex = 995, stopIndex = 999, scrollTop = SCROLL_TOP_MAX;
+      const [top, bottom] = calcScrollThresholds(
+        itemsScrollIndex,
+        CLIENT_HEIGHT,
+        startIndex,
+        stopIndex,
+        ScrollDir.DOWN,
+        scrollTop
+      );
+      expect(top).toBe(100);
+      expect(bottom).toBe(0);
+    });
+
+    it('should calculate thresholds between indexes: [995, 999] and scrollTop = bottom when scrolling up', () => {
+      const startIndex = 995, stopIndex = 999, scrollTop = SCROLL_TOP_MAX;
+      const [top, bottom] = calcScrollThresholds(
+        itemsScrollIndex,
+        CLIENT_HEIGHT,
+        startIndex,
+        stopIndex,
+        ScrollDir.UP,
+        scrollTop
+      );
+      expect(top).toBe(0);
+      expect(bottom).toBe(100);
+    });
+
+    it('should calculate thresholds between indexes: [995, 999] and scrollTop = 74000 when scrolling up', () => {
+      const startIndex = 995, stopIndex = 999, scrollTop = SCROLL_TOP_MAX - 600;
+      const [top, bottom] = calcScrollThresholds(
+        itemsScrollIndex,
+        CLIENT_HEIGHT,
+        startIndex,
+        stopIndex,
+        ScrollDir.UP,
+        scrollTop
+      );
+      expect(top).toBe(-600);
+      expect(bottom).toBe(-500);
     });
   });
 });
