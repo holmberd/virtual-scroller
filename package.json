@@ -1,5 +1,5 @@
 {
-  "name": "view-element",
+  "name": "virtual-scroller",
   "version": "1.0.0",
   "description": "",
   "main": "build/index.js",
@@ -9,8 +9,8 @@
     "start": "npm run build -- --servedir=build",
     "watch": "npm run build -- --watch"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Dag Holmberg",
+  "license": "BSD-2-Clause",
   "devDependencies": {
     "construct-style-sheets-polyfill": "^3.1.0",
     "esbuild": "^0.14.25",
@@ -21,7 +21,7 @@
     "lit-html": "^2.2.1"
   },
   "jest": {
-    "collectCoverage": true,
+    "collectCoverage": false,
     "setupFiles": [
       "<rootDir>/setup-tests.js",
       "construct-style-sheets-polyfill"
