@@ -7,14 +7,14 @@ import {
   calcScrollThresholds,
 } from './vertical-virtualization';
 
-const CLIENT_HEIGHT = 400;
-const SMALL_ITEM_HEIGHT = 50;
-const LARGE_ITEM_HEIGHT = 100;
-const ITEM_COUNT = 1000;
-const SCROLL_HEIGHT = SMALL_ITEM_HEIGHT * (ITEM_COUNT / 2) + LARGE_ITEM_HEIGHT * (ITEM_COUNT / 2);
-const SCROLL_TOP_MAX = SCROLL_HEIGHT - CLIENT_HEIGHT;
-
 describe('Vertical virtualization calculation tests', () => {
+  const CLIENT_HEIGHT = 400;
+  const SMALL_ITEM_HEIGHT = 50;
+  const LARGE_ITEM_HEIGHT = 100;
+  const ITEM_COUNT = 1000;
+  const SCROLL_HEIGHT = SMALL_ITEM_HEIGHT * (ITEM_COUNT / 2) + LARGE_ITEM_HEIGHT * (ITEM_COUNT / 2);
+  const SCROLL_TOP_MAX = SCROLL_HEIGHT - CLIENT_HEIGHT;
+
   let items = [];
   let itemsScrollIndex = [];
 

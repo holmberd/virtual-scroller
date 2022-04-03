@@ -42,7 +42,7 @@ export default class VirtualScroller extends HTMLElement {
     shadowRoot.adoptedStyleSheets = [listItemSheet];
 
     this.itemCount = 0;
-    this.visibleOffset = 3;
+    this.visibleOffset = 0;
     this.lastScrollPosition = 0;
     this.visibleStartIndex = 0;
     this.visibleStopIndex = 0;

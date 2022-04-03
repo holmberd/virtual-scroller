@@ -4,24 +4,22 @@
 
 import VirtualScroller from './virtual-scroller';
 
-const VIRTUAL_SCROLLER_HEIGHT = 400;
-const VIRTUAL_SCROLLER_WIDTH = 400;
-const VISIBLE_RANGE_CHANGE_EVENT = 'visibleRangeChange'
-
 describe('virtual-scroller tests', () => {
+  const VIRTUAL_SCROLLER_HEIGHT = 400;
+  const VIRTUAL_SCROLLER_WIDTH = 400;
+  const VISIBLE_RANGE_CHANGE_EVENT = 'visibleRangeChange'
+
   let events = {};
   let items = [];
   const getItemHeight = (index) => index % 2 === 0 ? 50 : 100;
 
-
   beforeAll(() => {
-    items = Array(1000).fill(true).map((_, index) => ({
-      id: index,
-      height: getItemHeight(index),
-    }));
+    items = Array(1000).fill(true).map((_, index) => ({ id: index }));
   })
 
-  // afterAll(() => {});
+  afterAll(() => {
+    items = [];
+  });
 
   beforeEach(() => {
     const virtualScroller = new VirtualScroller();
