@@ -58,16 +58,10 @@ describe('virtual-scroller tests', () => {
     expect(document.querySelector('virtual-scroller')).toBeTruthy();
   });
 
-  it('should emit visibleRangeChange event during init', (done) => {
-    const virtualScroller = document.querySelector('virtual-scroller');
-    virtualScroller.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, () => done());
-    virtualScroller.init(items.length, getItemHeight);
-  });
-
   it('should calculate the range of visible items during init (scrollTop = 0)', (done) => {
     expect.assertions(2);
     const virtualScroller = document.querySelector('virtual-scroller');
-
+    virtualScroller.visibleOffset = 0;
     virtualScroller.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
       // 50 + 100 + 50 + 100 + 50 + 100 = 450
       expect(startIndex).toBe(0); // scrollTop = 0
