@@ -145,7 +145,7 @@ function validateIndexes(itemCount, startIndex, stopIndex) {
     throw Error('start index must come before stop index');
   }
   if (startIndex < 0 || stopIndex < 0 || stopIndex >= itemCount) {
-    throw Error('start/stop index must be > -1 and stop index < item count');
+    throw Error('startIndex must be > -1 and -1 < stopIndex < itemCount');
   }
   return true;
 }
