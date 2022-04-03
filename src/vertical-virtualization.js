@@ -77,7 +77,7 @@ export function calcScrollThresholds(
 ) {
   const visibleItemsHeight = calcHeightBetween(itemsScrollIndex, startIndex, stopIndex);
 
-  // Handles the initial case when scrollbar is at the top.
+  // Initial case when scrollbar is at the top.
   if (!scrollTopOffset && scrollDir === ScrollDir.DOWN) {
     return [0, visibleItemsHeight - clientHeight];
   }
@@ -89,11 +89,11 @@ export function calcScrollThresholds(
   if (scrollDir === ScrollDir.UP) {
     return [
       firstVisibleItemTopOffset,
-      getItemScrollTopOffset(itemsScrollIndex, stopIndex) - lastVisibleItemBottomOffset
+      calcItemHeight(itemsScrollIndex, stopIndex) - lastVisibleItemBottomOffset
     ];
   }
 
-  const topScrollThreshold = getItemScrollTopOffset(itemsScrollIndex, startIndex) - firstVisibleItemTopOffset;
+  const topScrollThreshold = calcItemHeight(itemsScrollIndex, startIndex) - firstVisibleItemTopOffset;
   return [topScrollThreshold, lastVisibleItemBottomOffset];
 }
 
@@ -125,13 +125,17 @@ export function calcHeightBetween(itemsScrollIndex, startIndex, stopIndex) {
   return stopIndexScrollTopOffset - startIndexScrollTopOffset;
 }
 
+function calcItemHeight(itemsScrollIndex, index) {
+  return getItemScrollTopOffset(itemsScrollIndex, index) - getItemScrollTopOffset(itemsScrollIndex, index - 1);
+}
+
 /**
- * Returns scroll top offset for the item at the specified index.
+ * Returns the scroll height top offset for the item at the specified index.
  * @returns {number}
  */
 function getItemScrollTopOffset(itemsScrollIndex, index) {
   if (!itemsScrollIndex) {
-    throw Error('Missing items scroll index');
+    throw Error('Missing required argument: itemsScrollIndex');
   }
   return itemsScrollIndex[index] || 0;
 }

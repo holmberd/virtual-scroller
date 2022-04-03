@@ -121,6 +121,7 @@ describe('Vertical virtualization calculation tests', () => {
     });
   });
 
+  // TODO: consider overscan/offset indexes.
   describe('Calculate scroll overflow', () => {
     it('should calculate scroll overflow between indexes: [0, 0]', () => {
       const startIndex = 0, stopIndex = 0;
@@ -217,18 +218,32 @@ describe('Vertical virtualization calculation tests', () => {
       expect(bottom).toBe(25);
     });
 
-    // it('should calculate scroll thresholds between indexes: [1, 7] and scrollTop = 125 when scrolling down', () => {
-    //   startIndex = 1, stopIndex = 7, scrollTop = 125;
-    //   [top, bottom] = calcScrollThresholds(
-    //     itemsScrollIndex,
-    //     CLIENT_HEIGHT,
-    //     startIndex,
-    //     stopIndex,
-    //     ScrollDir.DOWN,
-    //     scrollTop
-    //   );
-    //   expect(top).toBe(25);
-    //   expect(bottom).toBe(75);
-    // });
+    it('should calculate scroll thresholds between indexes: [1, 7] and scrollTop = 125 when scrolling down', () => {
+      startIndex = 1, stopIndex = 7, scrollTop = 125;
+      [top, bottom] = calcScrollThresholds(
+        itemsScrollIndex,
+        CLIENT_HEIGHT,
+        startIndex,
+        stopIndex,
+        ScrollDir.DOWN,
+        scrollTop
+      );
+      expect(top).toBe(25);
+      expect(bottom).toBe(75);
+    });
+
+    it('should calculate scroll thresholds between indexes: [1, 7] and scrollTop = 125 when scrolling up', () => {
+      startIndex = 1, stopIndex = 7, scrollTop = 125;
+      [top, bottom] = calcScrollThresholds(
+        itemsScrollIndex,
+        CLIENT_HEIGHT,
+        startIndex,
+        stopIndex,
+        ScrollDir.UP,
+        scrollTop
+      );
+      expect(top).toBe(75);
+      expect(bottom).toBe(25);
+    });
   });
 });
