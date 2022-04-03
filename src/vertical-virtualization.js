@@ -1,5 +1,3 @@
-import { bSearch } from './utils';
-
 export const ScrollDir = {
   DOWN: 'down',
   UP: 'up',
@@ -148,4 +146,21 @@ function validateIndexes(itemCount, startIndex, stopIndex) {
     throw Error('startIndex must be > -1 and -1 < stopIndex < itemCount');
   }
   return true;
+}
+
+/**
+ * Performs a binary-search on the array by testing
+ * each element in the array against the provided function.
+ */
+function bSearch(array, callback, start = -1) {
+  let end = array.length - 1;
+  while (start + 1 < end) {
+    const mid = start + ((end - start) >> 1);
+    if (callback(array[mid])) {
+      end = mid;
+    } else {
+      start = mid;
+    }
+  }
+  return end;
 }
