@@ -13,7 +13,6 @@ const LARGE_ITEM_HEIGHT = 100;
 const ITEM_COUNT = 1000;
 const SCROLL_HEIGHT = SMALL_ITEM_HEIGHT * (ITEM_COUNT / 2) + LARGE_ITEM_HEIGHT * (ITEM_COUNT / 2);
 const SCROLL_TOP_MAX = SCROLL_HEIGHT - CLIENT_HEIGHT;
-const getItemHeight = (index) => index % 2 === 0 ? SMALL_ITEM_HEIGHT : LARGE_ITEM_HEIGHT;
 
 describe('Vertical virtualization calculation tests', () => {
   let items = [];
@@ -21,12 +20,14 @@ describe('Vertical virtualization calculation tests', () => {
 
   beforeAll(() => {
     items = Array(1000).fill(true).map((_, index) => ({ id: index }));
+    const getItemHeight = (index) => index % 2 === 0 ? SMALL_ITEM_HEIGHT : LARGE_ITEM_HEIGHT;
     itemsScrollIndex = buildItemsScrollIndex(items.length, getItemHeight)
   })
 
-  afterAll(() => {});
-  beforeEach(() => {});
-  afterEach(() => {});
+  afterAll(() => {
+    items = [];
+    itemsScrollIndex = [];
+  });
 
   describe('Calculate visible items indexes', () => {
     it('should calculate visible items indexes when scrollTop = 0 (top)', () => {
