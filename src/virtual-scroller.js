@@ -42,7 +42,7 @@ export default class VirtualScroller extends HTMLElement {
     shadowRoot.adoptedStyleSheets = [listItemSheet];
 
     this.itemCount = 0;
-    this.visibleOffset = 2;
+    this.visibleOffset = 3;
     this.lastScrollPosition = 0;
     this.visibleStartIndex = 0;
     this.visibleStopIndex = 0;
@@ -147,12 +147,12 @@ export default class VirtualScroller extends HTMLElement {
     this.visibleStopIndex = stopIndex;
 
     const offsetStartIndex = startIndex === 0
-      ? 0 : startIndex - this.visibleOffset >= 0
-        ? startIndex - this.visibleOffset : 0;
+      ? 0 : (startIndex - this.visibleOffset) < 0
+        ? 0 : (startIndex - this.visibleOffset);
 
     const offsetStopIndex = stopIndex === 0
-      ? 0 : stopIndex + this.visibleOffset < this.itemCount
-        ? stopIndex + this.visibleOffset : this.itemCount;
+      ? 0 : (stopIndex + this.visibleOffset) >= this.itemCount
+        ? this.itemCount - 1 : (stopIndex + this.visibleOffset);
 
     this.updateScrollOverflow(offsetStartIndex, offsetStopIndex);
 
