@@ -1,29 +1,28 @@
 {
   "name": "virtual-scroller",
   "version": "1.0.0",
-  "description": "",
-  "main": "build/index.js",
+  "description": "High performance web component for rendering large numbers of scrollable list elements",
+  "author": "Dag Holmberg (https://github.com/holmberd/)",
+  "license": "BSD-3-Clause",
+  "main": "dist/virtual-scroller.cjs.js",
+  "module": "dist/virtual-scroller.esm.js",
+  "files": [
+    "src",
+    "dist/virtual-scroller.cjs.js",
+    "dist/virtual-scroller.cjs.js.map",
+    "dist/virtual-scroller.esm.js",
+    "dist/virtual-scroller.esm.js.map"
+  ],
+  "sideEffects": false,
   "scripts": {
     "test": "jest --no-cache",
-    "build": "esbuild --bundle src/index.js --outfile=build/index.js",
-    "start": "npm run build -- --servedir=build",
+    "build": "rm -rf ./dist && node ./esbuild.js",
+    "start": "npm run build && esbuild --servedir=build",
     "watch": "npm run build -- --watch"
-  },
-  "author": "Dag Holmberg",
-  "license": "BSD-2-Clause",
-  "devDependencies": {
-    "construct-style-sheets-polyfill": "^3.1.0",
-    "esbuild": "^0.14.25",
-    "esbuild-jest": "^0.5.0",
-    "jest": "^27.5.1"
-  },
-  "dependencies": {
-    "lit-html": "^2.2.1"
   },
   "jest": {
     "collectCoverage": false,
     "setupFiles": [
-      "<rootDir>/setup-tests.js",
       "construct-style-sheets-polyfill"
     ],
     "transform": {
@@ -34,5 +33,23 @@
         }
       ]
     }
+  },
+  "keywords": [
+    "virtual-scroller",
+    "virtual",
+    "virtualized",
+    "infinite",
+    "list",
+    "scrolling",
+    "table"
+  ],
+  "devDependencies": {
+    "construct-style-sheets-polyfill": "^3.1.0",
+    "esbuild": "^0.14.25",
+    "esbuild-jest": "^0.5.0",
+    "jest": "^27.5.1"
+  },
+  "dependencies": {
+    "lit-html": "^2.2.1"
   }
 }
