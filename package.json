@@ -17,7 +17,7 @@
   "scripts": {
     "test": "jest --no-cache",
     "build": "rm -rf ./dist && node ./esbuild.js",
-    "start": "npm run build && esbuild --servedir=build",
+    "start": "npm run build && rm -f ./build-dev/virtual-scroller.js && cp ./dist/virtual-scroller.esm.js ./build-dev/virtual-scroller.js && esbuild --servedir=build-dev",
     "watch": "npm run build -- --watch"
   },
   "jest": {

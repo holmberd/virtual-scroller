@@ -21,7 +21,27 @@ yarn add virtual-scroller
 ```
 
 ## Usage
-- TBD
+### React
+```js
+  const getItemHeight = (index) => index % 2 === 0 ? 50 : 100;
+  const items = Array.from(Array(10000).map((index) => ({
+    id: index,
+    height: getItemHeight(index),
+  }));
+
+  scrollerRef.current.addEventListener('visibleRangeChange', ({ detail: { startIndex, stopIndex } }) => {
+    setItems(items.slice(startIndex, stopIndex + 1));
+  });
+
+  scrollerRef.current.init(items.length, getItemHeight);
+
+  ...
+
+  <virtual-scroller width='400px' height='400px' ref={scrollerRef}>
+    {items.map(item => <div key={item.id} style={{ height: item.height }}>{item.id}</div>)}
+  </virtual-scroller>
+```
+
 
 ## API
 - TBD
