@@ -82,29 +82,14 @@ export default class VirtualScroller extends HTMLElement {
     this.height = this.clientHeight; // Cache this for calculations.
     this.lastScrollPosition = this.scrollTop;
 
-    // If we needed to throttle this, e.g. 1000/60 = 16 ms at 60fps, we need to ensure we get the last event.
+    // If we needed to throttle this, e.g. 1000/60 = 16 ms at 60fps,we need to ensure we get the last event.
     // Either with modified throttle or combination of throttle debounce
     this.addEventListener('scroll', this.handleScroll);
 
-    // The more specific selector the better the performance lookup.
-    // const items = [...this.querySelectorAll(`:scope > *`)];
-
-    // this.observer = new MutationObserver((mutationsList) => {
-    //   for (const mutation of mutationsList) {
-    //     if (mutation.type !== 'childList') {
-    //       return;
-    //     }
-    //     const items = [...this.querySelectorAll(`:scope > *`)];
-    //     console.log(items);
-    //   }
-    // });
-
-    // this.observer.observe(this, { childList: true, subtree: false });
+    // TODO: Add resizeObserver.
   }
 
-  disconnectedCallback() {
-    // this.observer && this.observer.disconnect();
-  }
+  disconnectedCallback() {}
 
   /**
    * @public
@@ -147,14 +132,8 @@ export default class VirtualScroller extends HTMLElement {
     this.visibleStartIndex = startIndex;
     this.visibleStopIndex = stopIndex;
 
-    // TODO: Replace with Math.max/min...
-    const offsetStartIndex = startIndex === 0
-      ? 0 : (startIndex - this.visibleOffset) < 0
-        ? 0 : (startIndex - this.visibleOffset);
-
-    const offsetStopIndex = stopIndex === 0
-      ? 0 : (stopIndex + this.visibleOffset) >= this.itemCount
-        ? this.itemCount - 1 : (stopIndex + this.visibleOffset);
+    const offsetStartIndex = Math.max(0, startIndex - this.visibleOffset);
+    const offsetStopIndex = Math.min(Math.max(0, this.itemCount - 1), stopIndex + this.visibleOffset);
 
     this.updateScrollOverflow(offsetStartIndex, offsetStopIndex);
 
