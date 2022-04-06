@@ -82,10 +82,9 @@ export default class VirtualScroller extends HTMLElement {
     this.height = this.clientHeight; // Cache this for calculations.
     this.lastScrollPosition = this.scrollTop;
 
-    // TODO/FIX: Remove throttle to resolve not getting last event.
-    const throttledHandleScroll = throttle(this.handleScroll.bind(this), this.throttle);
-
-    this.addEventListener('scroll', throttledHandleScroll);
+    // If we needed to throttle this, e.g. 1000/60 = 16 ms at 60fps, we need to ensure we get the last event.
+    // Either with modified throttle or combination of throttle debounce
+    this.addEventListener('scroll', this.handleScroll);
 
     // The more specific selector the better the performance lookup.
     // const items = [...this.querySelectorAll(`:scope > *`)];
