@@ -7,3 +7,24 @@ export function throttle(fn, wait) {
     }
   }
 }
+
+/*
+
+function throttle(fn, wait) {
+  let lastFn, lastRan;
+  return (...args) => {
+    if (!lastRan) {
+      fn(...args);
+      lastRan = Date.now();
+    } else {
+      clearTimeout(lastFunc);
+      lastFunc = setTimeout(() => {
+        if ((Date.now() - lastRan) >= wait) {
+          fn(...args);
+          lastRan = Date.now();
+        }
+      }, wait - (Date.now() - lastRan));
+    }
+  }
+}
+*/
