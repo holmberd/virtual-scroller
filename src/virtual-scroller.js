@@ -32,8 +32,6 @@ const Event = {
   VISIBLE_RANGE_CHANGE: 'visibleRangeChange',
 };
 
-// Element callback fires when it needs new elements to render on scroll.
-
 export default class VirtualScroller extends HTMLElement {
   constructor() {
     super();
@@ -47,7 +45,6 @@ export default class VirtualScroller extends HTMLElement {
     this.visibleStartIndex = 0;
     this.visibleStopIndex = 0;
     this.observer = null;
-    this.throttle = 0;
 
     this._itemsScrollIndex = [];
     this._clientHeightCache = 0;
@@ -149,13 +146,15 @@ export default class VirtualScroller extends HTMLElement {
   }
 
   handleScroll(e) {
-    // TODO: if scrollDistance is zero, do nothing.
     const scrollTopOffset = this.scrollTop;
+    if (scrollTopOffset === this.lastScrollPosition) {
+      return;
+    }
     const scrollDistance = scrollTopOffset - this.lastScrollPosition;
     const isScrollDirDown = scrollDistance > 0;
     this.lastScrollPosition = scrollTopOffset;
 
-    // TODO: memoize result to avoid unnecessary work.
+    // TODO: Any point in memoizing calls below?
     const [
       topThreshold,
       bottomThreshold
@@ -167,8 +166,6 @@ export default class VirtualScroller extends HTMLElement {
       isScrollDirDown ? ScrollDir.DOWN : ScrollDir.UP,
       scrollTopOffset,
     );
-
-    console.log('threshold', bottomThreshold, topThreshold);
 
     if (bottomThreshold < 0 || topThreshold < 0) {
       const [startIndex, stopIndex] = calcVisibleItems(
