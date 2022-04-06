@@ -5,7 +5,6 @@ import {
   calcScrollThresholds,
   calcScrollOverflow,
 } from './vertical-virtualization';
-import { throttle } from './utils';
 
 const template = document.createElement('template');
 const listItemSheet = new CSSStyleSheet();
