@@ -105,8 +105,6 @@ const getItemHeight = (index) => index % 2 === 0 ? 50 : 100;
 ### update(): void
 Calculates the visible items range and dispatches a `visibleRangeChange`. Only call this if you need to manually trigger the event without calling `init` or scroll.
 
-### virtualScroller.visibleOffset
-
 ## Browser Support
 
 `<virtual-scroller>` supports `es2020` JavaScript features for desktop and
