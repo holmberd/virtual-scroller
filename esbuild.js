@@ -9,7 +9,7 @@ esbuild
     sourcemap: true,
     minify: true,
     format: 'esm',
-    target: ['es2019']
+    target: ['es2020']
   })
   .catch(() => process.exit(1));
 
@@ -22,6 +22,6 @@ esbuild
     sourcemap: true,
     minify: true,
     format: 'cjs',
-    target: ['es2019']
+    target: ['es2020']
   })
   .catch(() => process.exit(1));
