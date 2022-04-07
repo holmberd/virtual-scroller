@@ -14,7 +14,7 @@
     "react-dom": "^18.0.0"
   },
   "scripts": {
-    "build": "esbuild --bundle ./index.js --outfile=build/index.js",
+    "build": "esbuild --bundle ./index.js --loader:.js=jsx --outfile=build/index.js",
     "start": "npm run build -- --servedir=build",
     "watch": "npm run build -- --watch"
   }
