@@ -87,17 +87,27 @@ virtualScroller.addEventListener('visibleRangeChange', ({ detail }) => {
 virtualScroller.init(items.length, getItemHeight);
 ```
 
-## API
-### `init(itemCount: string, getItemHeight: function, itemBuffer = 0): void`
+### Method
+### `init(itemCount: string, getItemHeight: function, offsetVisibleIndex = 0): void`
+Once called the virtual-scroller will calculate the visible range and dispatch a `visible-range-change` event. You can call this multiple times to reset the items scroll index, e.g. to increase item-count when a user scrolls down the list or when the height of an item changes.
+
 Takes in three arguments:
 - `itemCount: number`: The total number of top-level items.
 - `getItemHeight(index: number): number`: Function to calculate and return the height of each item by index.
-- `itemBuffer: number`: Number of extra items to be rendered before/after the visible range.
-
-Once called the virtual-scroller will calculate the visible range and dispatch a `visibleRangeChange` event. You can call this multiple times to reset the items scroll index, e.g. to increase item-count when a user scrolls down the list or when the height of an item changes.
+- `offsetVisibleIndex: number`: Number of extra items to be rendered before/after the visible range.
 
 ### `update(): void`
-Calculates the visible items range and dispatches a `visibleRangeChange`. Only call this if you need to manually trigger the event without calling `init` or scroll.
+Calculates the visible items range and dispatches a `visibleRangeChange`. Only call this if you need to manually trigger the event without calling `init` or on scroll.
+
+## Events
+
+### visible-range-change: CustomEvent
+Fired when the visible range of item indexes changes.
+```js
+e.detail.startIndex: number
+e.detail.stopIndex: number
+e.detail.offsetIndex: number
+```
 
 ## Browser Support
 
@@ -116,4 +126,4 @@ Command                         | Description
 `npm run dev`                   | TBD.
 
 ## Contributing
-If you'd like to contribute to `<virtual-scroller``, please first read through our contribution guidelines.
+If you'd like to contribute to `<virtual-scroller>`, please first read through our contribution guidelines.
