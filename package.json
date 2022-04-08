@@ -23,7 +23,8 @@
   "jest": {
     "collectCoverage": false,
     "setupFiles": [
-      "construct-style-sheets-polyfill"
+      "construct-style-sheets-polyfill",
+      "<rootDir>/setupTests.js"
     ],
     "transform": {
       "^.+\\.js?$": [
