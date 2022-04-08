@@ -30,6 +30,14 @@ describe('Vertical virtualization calculation tests', () => {
   });
 
   describe('Calculate visible items indexes', () => {
+    it('should calculate visible items indexes when scrollTop = 0 and clientHeight = 0', () => {
+      const scrollTop = 0;
+      const clientHeight = 0;
+      const [startIndex, stopIndex] = calcVisibleItems(itemsScrollIndex, clientHeight, scrollTop);
+      expect(startIndex).toBe(0);
+      expect(stopIndex).toBe(0);
+    });
+
     it('should calculate visible items indexes when scrollTop = 0 (top)', () => {
       const scrollTop = 0;
       const [startIndex, stopIndex] = calcVisibleItems(itemsScrollIndex, CLIENT_HEIGHT, scrollTop);
