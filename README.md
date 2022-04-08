@@ -90,17 +90,11 @@ virtualScroller.init(items.length, getItemHeight);
 ## API
 ### `init(itemCount: string, getItemHeight: function, itemBuffer = 0): void`
 Takes in three arguments:
-- `itemCount`: The total number of top-level items.
-- `getItemHeight`: Function to calculate item height by its index.
-- `itemBuffer`: Number of extra items to be rendered before/after the visible range.
+- `itemCount: number`: The total number of top-level items.
+- `getItemHeight(index: number): number`: Function to calculate and return the height of each item by index.
+- `itemBuffer: number`: Number of extra items to be rendered before/after the visible range.
 
 Once called the virtual-scroller will calculate the visible range and dispatch a `visibleRangeChange` event. You can call this multiple times to reset the items scroll index, e.g. to increase item-count when a user scrolls down the list or when the height of an item changes.
-
-### `getItemHeight(index: number): number`
-Should calculate and return the height(px) for the item index.
-```js
-const getItemHeight = (index) => index % 2 === 0 ? 50 : 100;
-```
 
 ### `update(): void`
 Calculates the visible items range and dispatches a `visibleRangeChange`. Only call this if you need to manually trigger the event without calling `init` or scroll.
