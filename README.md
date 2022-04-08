@@ -87,8 +87,8 @@ virtualScroller.addEventListener('visibleRangeChange', ({ detail }) => {
 virtualScroller.init(items.length, getItemHeight);
 ```
 
-### Method
-### `init(itemCount: string, getItemHeight: function, offsetVisibleIndex = 0): void`
+## Method
+#### `init(itemCount: string, getItemHeight: function, offsetVisibleIndex = 0): void`
 Once called the virtual-scroller will calculate the visible range and dispatch a `visible-range-change` event. You can call this multiple times to reset the items scroll index, e.g. to increase item-count when a user scrolls down the list or when the height of an item changes.
 
 Takes in three arguments:
@@ -96,12 +96,12 @@ Takes in three arguments:
 - `getItemHeight(index: number): number`: Function to calculate and return the height of each item by index.
 - `offsetVisibleIndex: number`: Number of extra items to be rendered before/after the visible range.
 
-### `update(): void`
+#### `update(): void`
 Calculates the visible items range and dispatches a `visibleRangeChange`. Only call this if you need to manually trigger the event without calling `init` or on scroll.
 
 ## Events
 
-### `visible-range-change: CustomEvent`
+#### `visible-range-change: CustomEvent`
 Fired when the visible range of item indexes changes.
 ```js
 e.detail.startIndex: number
