@@ -101,7 +101,7 @@ Calculates the visible items range and dispatches a `visibleRangeChange`. Only c
 
 ## Events
 
-### visible-range-change: CustomEvent
+### `visible-range-change: CustomEvent`
 Fired when the visible range of item indexes changes.
 ```js
 e.detail.startIndex: number
