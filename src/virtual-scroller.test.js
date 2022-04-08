@@ -22,7 +22,6 @@ describe('virtual-scroller tests', () => {
 
   beforeEach(() => {
     const virtualScroller = new VirtualScroller();
-    document.body.appendChild(virtualScroller);
 
     Object.defineProperty(virtualScroller, 'clientHeight', {
       writable: false,
@@ -33,6 +32,8 @@ describe('virtual-scroller tests', () => {
       writable: false,
       value: VIRTUAL_SCROLLER_WIDTH,
     });
+
+    document.body.appendChild(virtualScroller);
 
     virtualScroller.addEventListener = jest.fn((event, callback) => {
       events[event] = callback;
@@ -55,10 +56,9 @@ describe('virtual-scroller tests', () => {
     expect(document.querySelector('virtual-scroller')).toBeTruthy();
   });
 
-  it('should calculate the range of visible items during init (scrollTop = 0)', (done) => {
+  it.only('should calculate the range of visible items during init (scrollTop = 0)', (done) => {
     expect.assertions(2);
     const virtualScroller = document.querySelector('virtual-scroller');
-    virtualScroller.visibleOffset = 0;
     virtualScroller.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
       // 50 + 100 + 50 + 100 + 50 + 100 = 450
       expect(startIndex).toBe(0); // scrollTop = 0
@@ -66,6 +66,6 @@ describe('virtual-scroller tests', () => {
       done();
     });
 
-    virtualScroller.init(items.length, getItemHeight);
+    virtualScroller.init(items.length, getItemHeight, 0);
   });
 });
