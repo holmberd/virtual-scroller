@@ -1,6 +1,3 @@
-/* TODO */
-// - Create react-virtual-scroller react wrapper component.
-
 import {
   ScrollDir,
   buildItemsScrollIndex,
@@ -11,7 +8,7 @@ import {
 import { debounce } from './utils';
 
 const template = document.createElement('template');
-const listItemSheet = new CSSStyleSheet();
+/* const listItemSheet = new CSSStyleSheet();
 listItemSheet.replaceSync(`
   :host {
     display: block;
@@ -23,22 +20,35 @@ listItemSheet.replaceSync(`
   #top-overflow, #bottom-overflow {
     visibility: hidden;
   }
-`);
+`); */
 
 template.innerHTML = `
+  <style>
+    :host {
+      display: block;
+      position: relative;
+      contain: content;
+      overflow: scroll;
+      overflow-x: hidden;
+    }
+    #top-overflow, #bottom-overflow {
+      visibility: hidden;
+    }
+  </style>
+
   <div id='top-overflow'></div>
   <slot></slot>
   <div id='bottom-overflow'></div>
 `;
 
-export const VISIBLE_RANGE_CHANGE_EVENT =  'visibleRangeChange';
+export const VISIBLE_RANGE_CHANGE_EVENT = 'visible-range-change';
 
 export default class VirtualScroller extends HTMLElement {
   constructor() {
     super();
     const shadowRoot = this.attachShadow({ mode: 'open' });
     shadowRoot.appendChild(document.importNode(template.content, true));
-    shadowRoot.adoptedStyleSheets = [listItemSheet];
+    // shadowRoot.adoptedStyleSheets = [listItemSheet];
 
     this.visibleStartIndex = 0;
     this.visibleStopIndex = 0;
@@ -97,6 +107,7 @@ export default class VirtualScroller extends HTMLElement {
   }
 
   connectedCallback() {
+
     // Cache clientHeight for future for calculations to prevent reflow.
     this.height = this.clientHeight;
     this._lastScrollOffset = this.scrollTop;
@@ -104,9 +115,9 @@ export default class VirtualScroller extends HTMLElement {
     // If we needed to throttle this, e.g. 1000/60 = 16 ms at 60fps, ensure we get the last event.
     this.addEventListener('scroll', this.handleScroll);
 
-    const debouncedHandleResize = debounce(this.handleResize);
-    this._resizeObserver = new ResizeObserver(debouncedHandleResize);
-    this._resizeObserver.observe(this);
+    // const debouncedHandleResize = debounce(this.handleResize.bind(this));
+    // this._resizeObserver = new ResizeObserver(debouncedHandleResize);
+    // this._resizeObserver.observe(this);
   }
 
   disconnectedCallback() {
@@ -120,10 +131,10 @@ export default class VirtualScroller extends HTMLElement {
   /**
    * @public
    */
-  // TODO: reset scrollIndex on itemcount update.
-  init(itemCount, calcItemHeight) {
+  init(itemCount, calcItemHeight, offsetVisibleIndex = 0) {
     this.itemCount = itemCount;
     this.calcItemHeight = calcItemHeight;
+    this.offsetVisibleIndex = offsetVisibleIndex;
     this.resetItemsScrollIndex();
   }
 
@@ -164,6 +175,7 @@ export default class VirtualScroller extends HTMLElement {
         detail: {
           startIndex: offsetStartIndex,
           stopIndex: offsetStopIndex,
+          offsetIndex: this.offsetVisibleIndex,
         },
         bubbles: true,
       })
