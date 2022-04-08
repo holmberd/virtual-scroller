@@ -2,12 +2,11 @@
  * @jest-environment jsdom
  */
 
-import VirtualScroller from './virtual-scroller';
+import VirtualScroller, { VISIBLE_RANGE_CHANGE_EVENT } from './virtual-scroller';
 
 describe('virtual-scroller tests', () => {
   const VIRTUAL_SCROLLER_HEIGHT = 400;
   const VIRTUAL_SCROLLER_WIDTH = 400;
-  const VISIBLE_RANGE_CHANGE_EVENT = 'visibleRangeChange'
 
   let events = {};
   let items = [];
