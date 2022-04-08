@@ -31,6 +31,7 @@ export function calcVisibleItems(itemsScrollIndex, clientHeight, scrollTop) {
     let startIndex = 0;
     let stopIndex = startIndex;
     const itemCount = itemsScrollIndex.length;
+
     for (; stopIndex < itemCount; stopIndex++) {
       if (getItemScrollTopOffset(itemsScrollIndex, stopIndex) > clientHeight) {
         break;
