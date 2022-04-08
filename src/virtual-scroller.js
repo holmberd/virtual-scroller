@@ -31,9 +31,7 @@ template.innerHTML = `
   <div id='bottom-overflow'></div>
 `;
 
-const Event = {
-  VISIBLE_RANGE_CHANGE: 'visibleRangeChange',
-};
+export const VISIBLE_RANGE_CHANGE_EVENT =  'visibleRangeChange';
 
 export default class VirtualScroller extends HTMLElement {
   constructor() {
@@ -94,14 +92,16 @@ export default class VirtualScroller extends HTMLElement {
     this._offsetVisibleIndex = value;
   }
 
+  onVisibleRangeChange(callback) {
+    this.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, callback);
+  }
 
   connectedCallback() {
     // Cache clientHeight for future for calculations to prevent reflow.
     this.height = this.clientHeight;
     this._lastScrollOffset = this.scrollTop;
 
-    // If we needed to throttle this, e.g. 1000/60 = 16 ms at 60fps,we need to ensure we get the last event.
-    // Either with modified throttle or combination of throttle debounce
+    // If we needed to throttle this, e.g. 1000/60 = 16 ms at 60fps, ensure we get the last event.
     this.addEventListener('scroll', this.handleScroll);
 
     const debouncedHandleResize = debounce(this.handleResize);
@@ -154,13 +154,13 @@ export default class VirtualScroller extends HTMLElement {
     this.visibleStartIndex = startIndex;
     this.visibleStopIndex = stopIndex;
 
-    const offsetStartIndex = Math.max(0, startIndex - this.visibleOffset);
-    const offsetStopIndex = Math.min(Math.max(0, this.itemCount - 1), stopIndex + this.visibleOffset);
+    const offsetStartIndex = Math.max(0, startIndex - this.offsetVisibleIndex);
+    const offsetStopIndex = Math.min(Math.max(0, this.itemCount - 1), stopIndex + this.offsetVisibleIndex);
 
     this.updateScrollOverflow(offsetStartIndex, offsetStopIndex);
 
     this.dispatchEvent(
-      new CustomEvent(Event.VISIBLE_RANGE_CHANGE, {
+      new CustomEvent(VISIBLE_RANGE_CHANGE_EVENT, {
         detail: {
           startIndex: offsetStartIndex,
           stopIndex: offsetStopIndex,
