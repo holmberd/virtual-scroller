@@ -16,7 +16,9 @@ export default function List() {
       return;
     }
 
-    listRef.current.addEventListener('visibleRangeChange', ({ detail: { startIndex, stopIndex } }) => {
+    console.log(listRef.current);
+
+    listRef.current.addEventListener('visible-range-change', ({ detail: { startIndex, stopIndex } }) => {
       // console.log('visibleRangeChange', startIndex, stopIndex);
       setItems(items.slice(startIndex, stopIndex + 1));
     });
@@ -25,7 +27,7 @@ export default function List() {
   }, []);
 
   return (
-    <virtual-scroller ref={listRef} style={{ border: '1px solid black'}}>
+    <virtual-scroller ref={listRef} style={{ border: '1px solid black'}} onChange={() => console.log('test')}>
       {items.map((item) =>
         <div key={item.id} style={{ height: item.height, borderBottom: '1px solid black' }}>{item.id}</div>)}
     </virtual-scroller>
