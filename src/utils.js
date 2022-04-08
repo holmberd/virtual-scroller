@@ -8,6 +8,22 @@ export function throttle(fn, wait) {
   }
 }
 
+export function debounce(callback, delay, leading = true) {
+  let start = now();
+
+  return (...args) => {
+    if (leading) {
+      leading = false;
+      callback(...args);
+    }
+    if (now() - start >= delay) {
+      callback(...args);
+    } else {
+      start = now();
+    }
+  }
+}
+
 /*
 
 function throttle(fn, wait) {
