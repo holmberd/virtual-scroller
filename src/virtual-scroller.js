@@ -1,3 +1,6 @@
+/* TODO */
+// - Create react-virtual-scroller react wrapper component.
+
 import {
   ScrollDir,
   buildItemsScrollIndex,
@@ -5,6 +8,7 @@ import {
   calcScrollThresholds,
   calcScrollOverflow,
 } from './vertical-virtualization';
+import { debounce } from './utils';
 
 const template = document.createElement('template');
 const listItemSheet = new CSSStyleSheet();
@@ -38,16 +42,16 @@ export default class VirtualScroller extends HTMLElement {
     shadowRoot.appendChild(document.importNode(template.content, true));
     shadowRoot.adoptedStyleSheets = [listItemSheet];
 
-    this.itemCount = 0;
-    this.visibleOffset = 0;
-    this.lastScrollPosition = 0;
     this.visibleStartIndex = 0;
     this.visibleStopIndex = 0;
-    this.observer = null;
 
+    this._offsetVisibleIndex = 0;
+    this._itemCount = 0;
     this._itemsScrollIndex = [];
+    this._lastScrollOffset = 0;
     this._clientHeightCache = 0;
     this._calcItemHeight = () => 0;
+    this._resizeObserver = null;
   }
 
   get calcItemHeight() {
@@ -74,18 +78,44 @@ export default class VirtualScroller extends HTMLElement {
     this._itemsScrollIndex = value;
   }
 
+  get itemCount() {
+    return this._itemCount;
+  }
+
+  set itemCount(value) {
+    this._itemCount = value;
+  }
+
+  get offsetVisibleIndex() {
+    return this._offsetVisibleIndex;
+  }
+
+  set offsetVisibleIndex(value) {
+    this._offsetVisibleIndex = value;
+  }
+
+
   connectedCallback() {
-    this.height = this.clientHeight; // Cache this for calculations.
-    this.lastScrollPosition = this.scrollTop;
+    // Cache clientHeight for future for calculations to prevent reflow.
+    this.height = this.clientHeight;
+    this._lastScrollOffset = this.scrollTop;
 
     // If we needed to throttle this, e.g. 1000/60 = 16 ms at 60fps,we need to ensure we get the last event.
     // Either with modified throttle or combination of throttle debounce
     this.addEventListener('scroll', this.handleScroll);
 
-    // TODO: Add resizeObserver.
+    const debouncedHandleResize = debounce(this.handleResize);
+    this._resizeObserver = new ResizeObserver(debouncedHandleResize);
+    this._resizeObserver.observe(this);
   }
 
-  disconnectedCallback() {}
+  disconnectedCallback() {
+    this.removeEventListener('scroll', this.handleScroll)
+    if (this._resizeObserver) {
+      this._resizeObserver.disconnect();
+      this._resizeObserver = null;
+    }
+  }
 
   /**
    * @public
@@ -94,16 +124,7 @@ export default class VirtualScroller extends HTMLElement {
   init(itemCount, calcItemHeight) {
     this.itemCount = itemCount;
     this.calcItemHeight = calcItemHeight;
-    this.itemsScrollIndex = buildItemsScrollIndex(this.itemCount, this.calcItemHeight);
-    this.update();
-  }
-
-  /**
-   * @public
-   */
-  resetItemsScrollIndex() {
-    this.itemsScrollIndex = buildItemsScrollIndex(this.itemCount, this.calcItemHeight);
-    this.update();
+    this.resetItemsScrollIndex();
   }
 
   /**
@@ -116,6 +137,11 @@ export default class VirtualScroller extends HTMLElement {
       this.scrollTop
     );
     this.updateVisibleItemIndexes(startIndex, stopIndex);
+  }
+
+  resetItemsScrollIndex() {
+    this.itemsScrollIndex = buildItemsScrollIndex(this.itemCount, this.calcItemHeight);
+    this.update();
   }
 
   /**
@@ -146,12 +172,12 @@ export default class VirtualScroller extends HTMLElement {
 
   handleScroll(e) {
     const scrollTopOffset = this.scrollTop;
-    if (scrollTopOffset === this.lastScrollPosition) {
+    if (scrollTopOffset === this._lastScrollOffset) {
       return;
     }
-    const scrollDistance = scrollTopOffset - this.lastScrollPosition;
+    const scrollDistance = scrollTopOffset - this._lastScrollOffset;
     const isScrollDirDown = scrollDistance > 0;
-    this.lastScrollPosition = scrollTopOffset;
+    this._lastScrollOffset = scrollTopOffset;
 
     // TODO: Any point in memoizing calls below?
     const [
@@ -174,6 +200,11 @@ export default class VirtualScroller extends HTMLElement {
       );
       this.updateVisibleItemIndexes(startIndex, stopIndex);
     }
+  }
+
+  handleResize() {
+    this.height = this.clientHeight;
+    this.update();
   }
 
   updateScrollOverflow(startIndex, stopIndex) {
