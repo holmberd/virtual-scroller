@@ -30,29 +30,33 @@ yarn add virtual-scroller
   import VirtualScroller from 'virtual-scroller';
 
   const getItemHeight = (index) => index % 2 === 0 ? 50 : 100;
-  const items = Array.from(Array(10000).map((index) => ({
+  const listItems = Array.from(Array(10000).map((index) => ({
     id: index,
     height: getItemHeight(index),
   }));
 
-  useEffect(() => {
-    if (!scrollerRef?.current) {
-      return;
-    }
+  function List() {
+    const [items, setItems] = useState([]);
 
-    scrollerRef.current.addEventListener('visibleRangeChange', ({ detail }) => {
-      const { startIndex, stopIndex } = detail;
-      setItems(items.slice(startIndex, stopIndex + 1));
-    });
+    useEffect(() => {
+      if (!scrollerRef?.current) {
+        return;
+      }
 
-    scrollerRef.current.init(items.length, getItemHeight);
-  }, [])
+      scrollerRef.current.addEventListener('visibleRangeChange', ({ detail }) => {
+        const { startIndex, stopIndex } = detail;
+        setItems(listItems.slice(startIndex, stopIndex + 1));
+      });
 
-  ...
+      scrollerRef.current.init(items.length, getItemHeight);
+    }, [])
 
-  <virtual-scroller width='400px' height='400px' ref={scrollerRef}>
-    {items.map(item => <div key={item.id} style={{ height: item.height }}>{item.id}</div>)}
-  </virtual-scroller>
+  return (
+    <virtual-scroller width='400px' height='400px' ref={scrollerRef}>
+      {items.map(item => <div key={item.id} style={{ height: item.height }}>{item.id}</div>)}
+    </virtual-scroller>
+  );
+}
 ```
 
 ### Lit
