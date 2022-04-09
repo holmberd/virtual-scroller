@@ -1,16 +1,15 @@
-export function debounce(callback, delay, leading = true) {
-  let start = Date.now();
-
+export function debounce(callback, wait, leading = true) {
+  let timeoutId = null;
   return (...args) => {
     if (leading) {
       leading = false;
       callback(...args);
+      return;
     }
-    if (Date.now() - start >= delay) {
+    window.clearTimeout(timeoutId);
+    timeoutId = window.setTimeout(() => {
       callback(...args);
-    } else {
-      start = Date.now();
-    }
-  }
+    }, wait);
+  };
 }
 
