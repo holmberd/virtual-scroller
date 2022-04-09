@@ -8,7 +8,7 @@ The `<virtual-scroller>` component is technology agnostic allowing you to use it
 that you are using for your project, e.g. React, lit, Vue...
 
 ## Performance
-`<virtual-scroller>` has great performance as it takes full advantage of browser's capabilities to batch DOM changes to minimize reflow and repaint. It also has a very small footprint to keep your bundles small to optimize for faster page loads.
+`<virtual-scroller>` has great performance as it takes full advantage of browser's capabilities to batch DOM updates to minimize reflow and repaint. It also has a very small footprint to keep your bundles small to optimize for faster page loads.
 
 ## Install
 
@@ -16,10 +16,10 @@ The `<virtual-scroller>` web component can be installed from [NPM](https://npmjs
 
 ```sh
 # NPM
-npm install virtual-scroller
+npm install @holmberd/virtual-scroller
 
 # Yarn
-yarn add virtual-scroller
+yarn add @holmberd/virtual-scroller
 
 ```
 
@@ -92,6 +92,7 @@ virtualScroller.init(items.length, getItemHeight);
 ```
 
 ## Methods
+
 #### `init(itemCount: string, getItemHeight: function, offsetVisibleIndex = 0): void`
 Once called the virtual-scroller will calculate the visible range and dispatch a `visible-range-change` event. You can call this multiple times to reset the items scroll index, e.g. to increase item-count when a user scrolls down the list or when the height of an item changes.
 
@@ -101,6 +102,7 @@ Takes in three arguments:
 - `offsetVisibleIndex: number`: Number of extra items to be rendered before/after the visible range.
 
 ## Properties
+
 #### `itemCount = 0`
 Set the total number of top-level items.
 
@@ -124,13 +126,11 @@ e.detail.offsetIndex: number
 ```
 
 ## Browser Support
-
 `<virtual-scroller>` supports `es2020` JavaScript features for desktop and
 mobile browsers and builds upon standard web platform APIs so that the performance,
 capabilities and compatibility of the library get better as the web evolves.
 
 ## Development (TBD)
-
 The following commands are available when developing `<virtual-scroller>`:
 
 Command                         | Description
