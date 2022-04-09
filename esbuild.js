@@ -1,15 +1,19 @@
 const esbuild = require('esbuild');
 
+const commonConfig = {
+  bundle: true,
+  sourcemap: true,
+  minify: true,
+  target: ['es2020']
+};
+
 // Build ESM.
 esbuild
   .build({
     entryPoints: ['src/index.js'],
     outfile: 'dist/virtual-scroller.esm.js',
-    bundle: true,
-    sourcemap: true,
-    minify: true,
     format: 'esm',
-    target: ['es2020']
+    ...commonConfig,
   })
   .catch(() => process.exit(1));
 
@@ -18,10 +22,7 @@ esbuild
   .build({
     entryPoints: ['src/index.js'],
     outfile: 'dist/virtual-scroller.cjs.js',
-    bundle: true,
-    sourcemap: true,
-    minify: true,
     format: 'cjs',
-    target: ['es2020']
+    ...commonConfig,
   })
   .catch(() => process.exit(1));
