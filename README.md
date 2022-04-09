@@ -48,6 +48,7 @@ yarn add virtual-scroller
         setItems(listItems.slice(startIndex, stopIndex + 1));
       });
 
+      scrollerRef.current.enableResizeObserver = true;
       scrollerRef.current.init(items.length, getItemHeight);
     }, [])
 
@@ -100,8 +101,18 @@ Takes in three arguments:
 - `getItemHeight(index: number): number`: Function to calculate and return the height of each item by index.
 - `offsetVisibleIndex: number`: Number of extra items to be rendered before/after the visible range.
 
-#### `update(): void`
-Calculates the visible items range and dispatches a `visibleRangeChange`. Only call this if you need to manually trigger the event without calling `init` or on scroll.
+## Properties
+#### `itemCount = 0`
+Set the total number of top-level items.
+
+#### `getItemHeight = (index) => 0`
+Set function to calculate and return the height of each item by index.
+
+#### `offsetVisibleIndex = 0`
+Set the number of extra items to be rendered before/after the visible range.
+
+#### `enableResizeObserver = false`
+Set wether to update visible item indexes on element resize.
 
 ## Events
 
