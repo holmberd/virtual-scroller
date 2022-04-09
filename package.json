@@ -1,7 +1,7 @@
 {
   "name": "@holmberd/virtual-scroller",
   "version": "1.0.1",
-  "description": "High performance web component for rendering a large number of scrollable list elements",
+  "description": "A custom web component for efficiently rendering lists with large number of elements",
   "author": "Dag Holmberg (https://github.com/holmberd/)",
   "license": "BSD-3-Clause",
   "repository": {
@@ -11,9 +11,6 @@
   "bugs": {
     "url": "https://github.com/holmberd/virtual-scroller/issues"
   },
-  "publishConfig": {
-    "@holmberd:registry": "https://npm.pkg.github.com"
-  },
   "main": "dist/virtual-scroller.cjs.js",
   "module": "dist/virtual-scroller.esm.js",
   "files": [
@@ -22,6 +19,10 @@
     "!*/*.test.js"
   ],
   "sideEffects": false,
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "test": "jest --no-cache",
     "build": "rm -rf ./dist && node ./esbuild.js && ls -l dist"
