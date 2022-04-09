@@ -48,7 +48,6 @@ yarn add virtual-scroller
         setItems(listItems.slice(startIndex, stopIndex + 1));
       });
 
-      scrollerRef.current.enableResizeObserver = true;
       scrollerRef.current.init(items.length, getItemHeight);
     }, [])
 
@@ -141,4 +140,4 @@ Command                         | Description
 `npm run dev`                   | TBD.
 
 ## Contributing
-If you'd like to contribute to `<virtual-scroller>`, please first read through our contribution guidelines.
+If you'd like to contribute to `<virtual-scroller>`, please reach out.
