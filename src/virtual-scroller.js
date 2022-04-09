@@ -7,21 +7,27 @@ import {
 } from './vertical-virtualization';
 import { debounce } from './utils';
 
-const template = document.createElement('template');
-/* const listItemSheet = new CSSStyleSheet();
-listItemSheet.replaceSync(`
-  :host {
-    display: block;
-    position: relative;
-    contain: content;
-    overflow: scroll;
-    overflow-x: hidden;
-  }
-  #top-overflow, #bottom-overflow {
-    visibility: hidden;
-  }
-`); */
+export const VISIBLE_RANGE_CHANGE_EVENT = 'visible-range-change';
 
+class LastUpdate {
+  constructor(startIndex, stopIndex, offsetIndex) {
+    this.startIndex = startIndex;
+    this.stopIndex = stopIndex;
+    this.offsetIndex = offsetIndex;
+  }
+
+  setUpdate(startIndex, stopIndex, offsetIndex) {
+    this.startIndex = startIndex;
+    this.stopIndex = stopIndex;
+    this.offsetIndex = offsetIndex;
+  }
+
+  isEqual(startIndex, stopIndex, offsetIndex) {
+    return startIndex === this.startIndex && stopIndex === this.stopIndex && offsetIndex === this.offsetIndex;
+  }
+}
+
+const template = document.createElement('template');
 template.innerHTML = `
   <style>
     :host {
@@ -41,14 +47,11 @@ template.innerHTML = `
   <div id='bottom-overflow'></div>
 `;
 
-export const VISIBLE_RANGE_CHANGE_EVENT = 'visible-range-change';
-
 export default class VirtualScroller extends HTMLElement {
   constructor() {
     super();
     const shadowRoot = this.attachShadow({ mode: 'open' });
     shadowRoot.appendChild(document.importNode(template.content, true));
-    // shadowRoot.adoptedStyleSheets = [listItemSheet];
 
     this._visibleStartIndex = 0;
     this._visibleStopIndex = 0;
@@ -58,15 +61,32 @@ export default class VirtualScroller extends HTMLElement {
     this._itemsScrollIndex = [];
     this._lastScrollOffset = 0;
     this._clientHeightCache = null;
+    this._lastUpdate = new LastUpdate();
     this._resizeObserver = null;
+    this._enableResizeObserver = false;
+    this._topOverflowElement = null;
+    this._bottomOverflowElement = null;
   }
 
-  get height() {
+  get _height() {
     return this._clientHeightCache ?? this.clientHeight;
   }
 
-  set height(value) {
+  set _height(value) {
     this._clientHeightCache = value;
+  }
+
+  get getItemHeight() {
+    return this._getItemHeight;
+  }
+
+  set getItemHeight(fn) {
+    if (fn === this._getItemHeight) {
+      return;
+    }
+    this._getItemHeight = fn;
+    this._updateItemsScrollIndex();
+    this._update();
   }
 
   get itemCount() {
@@ -74,7 +94,15 @@ export default class VirtualScroller extends HTMLElement {
   }
 
   set itemCount(value) {
+    if (value < 0) {
+      throw Error('Item count must be >= 0');
+    }
+    if (this._itemCount === value) {
+      return;
+    }
     this._itemCount = value;
+    this._updateItemsScrollIndex();
+    this._update();
   }
 
   get offsetVisibleIndex() {
@@ -82,24 +110,44 @@ export default class VirtualScroller extends HTMLElement {
   }
 
   set offsetVisibleIndex(value) {
+    if (value < 0) {
+      throw Error('Offset visible index must be >= 0');
+    }
+    if (this._offsetVisibleIndex === value) {
+      return;
+    }
     this._offsetVisibleIndex = value;
+    this._update();
+  }
+
+  get enableResizeObserver() {
+    return this._enableResizeObserver;
+  }
+
+  set enableResizeObserver(value) {
+    this._enableResizeObserver = value;
+    if (value) {
+      this._connectResizeObserver();
+    }
   }
 
   connectedCallback() {
-    // Cache clientHeight for future for calculations to prevent reflow.
-    this.height = this.clientHeight;
+    // Store clientHeight for future calculations to prevent reflow.
+    this._height = this.clientHeight;
     this._lastScrollOffset = this.scrollTop;
+    this._topOverflowElement = this.shadowRoot.querySelector('#top-overflow');
+    this._bottomOverflowElement = this.shadowRoot.querySelector('#bottom-overflow');
 
     // If we needed to throttle this, e.g. 1000/60 = 16 ms at 60fps, ensure we get the last event.
-    this.addEventListener('scroll', this.handleScroll);
+    this.addEventListener('scroll', this._handleScroll);
 
-    // const debouncedHandleResize = debounce(this.handleResize.bind(this));
-    // this._resizeObserver = new ResizeObserver(debouncedHandleResize);
-    // this._resizeObserver.observe(this);
+    if (this.enableResizeObserver) {
+      this._connectResizeObserver();
+    }
   }
 
   disconnectedCallback() {
-    this.removeEventListener('scroll', this.handleScroll)
+    this.removeEventListener('scroll', this._handleScroll)
     if (this._resizeObserver) {
       this._resizeObserver.disconnect();
       this._resizeObserver = null;
@@ -110,29 +158,36 @@ export default class VirtualScroller extends HTMLElement {
    * @public
    */
   init(itemCount, getItemHeight, offsetVisibleIndex = 0) {
-    this.itemCount = itemCount;
+    this._itemCount = itemCount;
     this._getItemHeight = getItemHeight;
-    this.offsetVisibleIndex = offsetVisibleIndex;
-    this.resetItemsScrollIndex();
+    this._offsetVisibleIndex = offsetVisibleIndex;
+    this._updateItemsScrollIndex();
+    this._update();
+  }
+
+  _updateItemsScrollIndex() {
+    this._itemsScrollIndex = buildItemsScrollIndex(this.itemCount, this.getItemHeight);
   }
 
   /**
    * @emits visible-range-change
    */
-  update(scrollTopOffset) {
+  _update(scrollTopOffset) {
     const [startIndex, stopIndex] = calcVisibleItems(
       this._itemsScrollIndex,
-      this.height,
+      this._height,
       scrollTopOffset ?? this.scrollTop
     );
+    const [offsetStartIndex, offsetStopIndex] = this._calcOffsetItemIndexes(startIndex, stopIndex);
 
-    if (this._visibleStartIndex === startIndex && this._visibleStopIndex === stopIndex) {
+    if (this._lastUpdate.isEqual(offsetStartIndex, offsetStopIndex, this.offsetVisibleIndex)) {
       return;
     }
 
-    this.setVisibleItemIndexes(startIndex, stopIndex);
-    const [offsetStartIndex, offsetStopIndex] = this.calcOffsetItemIndexes(startIndex, stopIndex);
-    this.updateScrollOverflow(offsetStartIndex, offsetStopIndex);
+    this._setVisibleItemIndexes(startIndex, stopIndex);
+    this._updateScrollOverflow(offsetStartIndex, offsetStopIndex);
+
+    this._lastUpdate.setUpdate(offsetStartIndex, offsetStopIndex, this.offsetVisibleIndex);
 
     this.dispatchEvent(
       new CustomEvent(VISIBLE_RANGE_CHANGE_EVENT, {
@@ -146,23 +201,18 @@ export default class VirtualScroller extends HTMLElement {
     );
   }
 
-  setVisibleItemIndexes(startIndex, stopIndex) {
+  _setVisibleItemIndexes(startIndex, stopIndex) {
     this._visibleStartIndex = startIndex;
     this._visibleStopIndex = stopIndex;
   }
 
-  calcOffsetItemIndexes(startIndex, stopIndex) {
+  _calcOffsetItemIndexes(startIndex, stopIndex) {
     const offsetStartIndex = Math.max(0, startIndex - this.offsetVisibleIndex);
     const offsetStopIndex = Math.min(Math.max(0, this.itemCount - 1), stopIndex + this.offsetVisibleIndex);
     return [offsetStartIndex, offsetStopIndex];
   }
 
-  resetItemsScrollIndex() {
-    this._itemsScrollIndex = buildItemsScrollIndex(this.itemCount, this._getItemHeight);
-    this.update();
-  }
-
-  handleScroll(e) {
+  _handleScroll(e) {
     const scrollTopOffset = this.scrollTop;
     if (scrollTopOffset === this._lastScrollOffset) {
       return;
@@ -171,13 +221,12 @@ export default class VirtualScroller extends HTMLElement {
     const isScrollDirDown = scrollDistance > 0;
     this._lastScrollOffset = scrollTopOffset;
 
-    // TODO: Any point in memoizing calls below?
     const [
       topThreshold,
       bottomThreshold
     ] = calcScrollThresholds(
       this._itemsScrollIndex,
-      this.height,
+      this._height,
       this._visibleStartIndex,
       this._visibleStopIndex,
       isScrollDirDown ? ScrollDir.DOWN : ScrollDir.UP,
@@ -185,33 +234,40 @@ export default class VirtualScroller extends HTMLElement {
     );
 
     if (bottomThreshold < 0 || topThreshold < 0) {
-      this.update(scrollTopOffset);
+      this._update(scrollTopOffset);
     }
   }
 
-  handleResize() {
-    this.height = this.clientHeight;
-    this.update();
+  _connectResizeObserver() {
+    if (this._resizeObserver) {
+      return;
+    }
+    const debouncedHandleResize = debounce(this._handleResize.bind(this), 20);
+    this._resizeObserver = new ResizeObserver(debouncedHandleResize);
+    this._resizeObserver.observe(this);
   }
 
-  updateScrollOverflow(startIndex, stopIndex) {
+  _handleResize() {
+    this._height = this.clientHeight;
+    this._update();
+  }
+
+  _updateScrollOverflow(startIndex, stopIndex) {
     const [topOverflowHeight, bottomOverflowHeight] = calcScrollOverflow(
       this._itemsScrollIndex,
       startIndex,
       stopIndex
     );
-    this.setTopOverflowHeight(topOverflowHeight);
-    this.setBottomOverflowHeight(bottomOverflowHeight);
+    this._setTopOverflowHeight(topOverflowHeight);
+    this._setBottomOverflowHeight(bottomOverflowHeight);
   }
 
-  setBottomOverflowHeight(height) {
-    const bottomOverflowElement = this.shadowRoot.querySelector('#bottom-overflow');
-    bottomOverflowElement.style.height = `${Math.max(0, height)}px`;
+  _setBottomOverflowHeight(height) {
+    this._bottomOverflowElement.style.height = `${Math.max(0, height)}px`;
   }
 
-  setTopOverflowHeight(height) {
-    const topOverflowElement = this.shadowRoot.querySelector('#top-overflow');
-    topOverflowElement.style.height = `${Math.max(0, height)}px`;
+  _setTopOverflowHeight(height) {
+    this._topOverflowElement.style.height = `${Math.max(0, height)}px`;
   }
 }
 
