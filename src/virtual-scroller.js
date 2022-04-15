@@ -34,8 +34,7 @@ template.innerHTML = `
       display: block;
       position: relative;
       contain: content;
-      overflow: scroll;
-      overflow-x: hidden;
+      overflow: auto;
     }
     #top-overflow, #bottom-overflow {
       visibility: hidden;
