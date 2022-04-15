@@ -1,10 +1,10 @@
-import { TextDirection, buildItemsScrollIndex } from './virtualization';
-
-export const ScrollDirection = {
-  LEFT: 'left',
-  RIGHT: 'right',
-};
-
+import {
+  ScrollDirection,
+  TextDirection,
+  getItemScrollOffset,
+  calcRangeBetween,
+  bSearch,
+} from './virtualization';
 
 /**
  * Calculates and returns the start-/stop-index for items visible within the element's viewport.
@@ -71,12 +71,12 @@ export function calcScrollThresholds(
     return [0, visibleItemsWidth - clientWidth];
   }
 
-  const beforeVisibleItemsScrollWidth = getItemScrollLeftOffset(itemsScrollIndex, startIndex - 1);
+  const beforeVisibleItemsScrollWidth = getItemScrollOffset(itemsScrollIndex, startIndex - 1);
   // Calculate elem.scrollWidth - elem.offsetWidth; since calling the API would trigger browser forced reflow/layout.
   const firstVisibleItemCoveredScrollWidth = scrollLeft - beforeVisibleItemsScrollWidth;
   const lastVisibleItemCoveredScrollWidth = visibleItemsHeight - clientWidth - firstVisibleItemCoveredScrollWidth;
 
-  if (scrollDir === ScrollDir.UP) {
+  if (scrollDir === ScrollDirection.LEFT) {
     return [
       firstVisibleItemCoveredScrollWidth,
       calcItemWidth(itemsScrollIndex, stopIndex) - lastVisibleItemCoveredScrollWidth
@@ -89,72 +89,10 @@ export function calcScrollThresholds(
   ];
 }
 
-/**
- * Calculates scroll width overflow before/after visible items.
- * @returns {[number, number]} [before, after]
- */
-export function calcScrollOverflow(itemsScrollIndex, startIndex, stopIndex) {
-  const itemCount = itemsScrollIndex.length;
-  validateIndexes(itemCount, startIndex, stopIndex);
-
-  const beforeVisibleItemsScrollWidth = getItemScrollLeftOffset(itemsScrollIndex, startIndex - 1);
-  const afterVisibleItemsScrollWidth = stopIndex >= itemCount - 1
-    ? 0 : calcWidthBetween(itemsScrollIndex, stopIndex + 1, itemCount - 1);
-
-  return [beforeVisibleItemsScrollWidth, afterVisibleItemsScrollWidth];
+function calcItemWidth(itemsScrollIndex, index) {
+  return getItemScrollOffset(itemsScrollIndex, index) - getItemScrollOffset(itemsScrollIndex, index - 1);
 }
 
-/**
- * Calculates height between to indexes.
- * @returns {number}
- */
-export function calcHeightBetween(itemsScrollIndex, startIndex, stopIndex) {
-  validateIndexes(itemsScrollIndex.length, startIndex, stopIndex);
-
-  const stopIndexScrollTopOffset = getItemScrollTopOffset(itemsScrollIndex, stopIndex);
-  const startIndexScrollTopOffset = getItemScrollTopOffset(itemsScrollIndex, startIndex - 1);
-
-  return stopIndexScrollTopOffset - startIndexScrollTopOffset;
-}
-
-function calcItemHeight(itemsScrollIndex, index) {
-  return getItemScrollTopOffset(itemsScrollIndex, index) - getItemScrollTopOffset(itemsScrollIndex, index - 1);
-}
-
-/**
- * Returns the scroll height top offset for the item at the specified index.
- * @returns {number}
- */
-function getItemScrollTopOffset(itemsScrollIndex, index) {
-  if (!itemsScrollIndex) {
-    throw Error('Missing required argument: itemsScrollIndex');
-  }
-  return itemsScrollIndex[index] || 0;
-}
-
-function validateIndexes(itemCount, startIndex, stopIndex) {
-  if (startIndex > stopIndex) {
-    throw Error('start index must come before stop index');
-  }
-  if (startIndex < 0 || stopIndex < 0 || stopIndex >= itemCount) {
-    throw Error('startIndex must be > -1 and -1 < stopIndex < itemCount');
-  }
-  return true;
-}
-
-/**
- * Performs a binary-search on the array by testing
- * each element in the array against the provided function.
- */
-function bSearch(array, callback, start = -1) {
-  let end = array.length - 1;
-  while (start + 1 < end) {
-    const mid = start + ((end - start) >> 1);
-    if (callback(array[mid])) {
-      end = mid;
-    } else {
-      start = mid;
-    }
-  }
-  return end;
+function calcWidthBetween(itemsScrollIndex, startIndex, stopIndex) {
+  return calcRangeBetween(itemsScrollIndex, startIndex, stopIndex);
 }
