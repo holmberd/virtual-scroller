@@ -53,7 +53,7 @@ export function calcVisibleItems(itemsScrollIndex, clientWidth, scrollLeft, text
 
 /**
  * Returns thresholds for the scroll distance required to bring items
- * fully inside or outside the element viewport area.
+ * fully inside or outside the element visible/viewport area.
  * @returns {[number, number]} [top, bottom]
  */
 export function calcScrollThresholds(
@@ -71,19 +71,22 @@ export function calcScrollThresholds(
     return [0, visibleItemsWidth - clientWidth];
   }
 
-  const virtualizedViewTop = getItemScrollLeftOffset(itemsScrollIndex, startIndex - 1);
-  const firstVisibleItemLeftOffset = scrollTopOffset - virtualizedViewTop;
-  const lastVisibleItemBottomOffset = visibleItemsHeight - clientHeight - firstVisibleItemTopOffset;
+  const beforeFirstVisibleItemScrollLeftOffset = getItemScrollLeftOffset(itemsScrollIndex, startIndex - 1);
+  // Calculate elem.scrollWidth - elem.offsetWidth; since calling the API would trigger browser forced reflow/layout.
+  const firstVisibleItemCoveredScrollWidth = scrollLeft - beforeFirstVisibleItemScrollLeftOffset;
+  const lastVisibleItemCoveredScrollWidth = visibleItemsHeight - clientWidth - firstVisibleItemCoveredScrollWidth;
 
   if (scrollDir === ScrollDir.UP) {
     return [
-      firstVisibleItemTopOffset,
-      calcItemHeight(itemsScrollIndex, stopIndex) - lastVisibleItemBottomOffset
+      firstVisibleItemCoveredScrollWidth,
+      calcItemHeight(itemsScrollIndex, stopIndex) - lastVisibleItemCoveredScrollWidth
     ];
   }
 
-  const topScrollThreshold = calcItemHeight(itemsScrollIndex, startIndex) - firstVisibleItemTopOffset;
-  return [topScrollThreshold, lastVisibleItemBottomOffset];
+  return [
+    calcItemHeight(itemsScrollIndex, startIndex) - firstVisibleItemCoveredScrollWidth,
+    lastVisibleItemCoveredScrollWidth,
+  ];
 }
 
 /**
