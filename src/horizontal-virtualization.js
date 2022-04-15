@@ -71,37 +71,37 @@ export function calcScrollThresholds(
     return [0, visibleItemsWidth - clientWidth];
   }
 
-  const beforeFirstVisibleItemScrollLeftOffset = getItemScrollLeftOffset(itemsScrollIndex, startIndex - 1);
+  const beforeVisibleItemsScrollWidth = getItemScrollLeftOffset(itemsScrollIndex, startIndex - 1);
   // Calculate elem.scrollWidth - elem.offsetWidth; since calling the API would trigger browser forced reflow/layout.
-  const firstVisibleItemCoveredScrollWidth = scrollLeft - beforeFirstVisibleItemScrollLeftOffset;
+  const firstVisibleItemCoveredScrollWidth = scrollLeft - beforeVisibleItemsScrollWidth;
   const lastVisibleItemCoveredScrollWidth = visibleItemsHeight - clientWidth - firstVisibleItemCoveredScrollWidth;
 
   if (scrollDir === ScrollDir.UP) {
     return [
       firstVisibleItemCoveredScrollWidth,
-      calcItemHeight(itemsScrollIndex, stopIndex) - lastVisibleItemCoveredScrollWidth
+      calcItemWidth(itemsScrollIndex, stopIndex) - lastVisibleItemCoveredScrollWidth
     ];
   }
 
   return [
-    calcItemHeight(itemsScrollIndex, startIndex) - firstVisibleItemCoveredScrollWidth,
+    calcItemWidth(itemsScrollIndex, startIndex) - firstVisibleItemCoveredScrollWidth,
     lastVisibleItemCoveredScrollWidth,
   ];
 }
 
 /**
- * Calculates scroll before/after visible items scroll overflow.
+ * Calculates scroll width overflow before/after visible items.
  * @returns {[number, number]} [before, after]
  */
 export function calcScrollOverflow(itemsScrollIndex, startIndex, stopIndex) {
   const itemCount = itemsScrollIndex.length;
   validateIndexes(itemCount, startIndex, stopIndex);
 
-  const beforeVisibleItemsHeight = getItemScrollTopOffset(itemsScrollIndex, startIndex - 1);
-  const afterVisibleItemsHeight = stopIndex >= itemCount - 1
-    ? 0 : calcHeightBetween(itemsScrollIndex, stopIndex + 1, itemCount - 1);
+  const beforeVisibleItemsScrollWidth = getItemScrollLeftOffset(itemsScrollIndex, startIndex - 1);
+  const afterVisibleItemsScrollWidth = stopIndex >= itemCount - 1
+    ? 0 : calcWidthBetween(itemsScrollIndex, stopIndex + 1, itemCount - 1);
 
-  return [beforeVisibleItemsHeight, afterVisibleItemsHeight];
+  return [beforeVisibleItemsScrollWidth, afterVisibleItemsScrollWidth];
 }
 
 /**
