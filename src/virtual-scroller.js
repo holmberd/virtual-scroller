@@ -66,6 +66,7 @@ export default class VirtualScroller extends HTMLElement {
     this._enableResizeObserver = false;
     this._topOverflowElement = null;
     this._bottomOverflowElement = null;
+    this._disableVirtualization = false;
   }
 
   get _height() {
@@ -125,10 +126,18 @@ export default class VirtualScroller extends HTMLElement {
   }
 
   set enableResizeObserver(value) {
-    this._enableResizeObserver = value;
+    this._enableResizeObserver = Boolean(value);
     if (value) {
       this._connectResizeObserver();
     }
+  }
+
+  get disableVirtualization() {
+    return this._disableVirtualization;
+  }
+
+  set disableVirtualization(value) {
+    this._disableVirtualization = Boolean(value);
   }
 
   connectedCallback() {
@@ -185,7 +194,7 @@ export default class VirtualScroller extends HTMLElement {
     }
 
     this._setVisibleItemIndexes(startIndex, stopIndex);
-    this._updateScrollOverflow(offsetStartIndex, offsetStopIndex);
+    !this.disableVirtualization && this._updateScrollOverflow(offsetStartIndex, offsetStopIndex);
 
     this._lastUpdate.setUpdate(offsetStartIndex, offsetStopIndex, this.offsetVisibleIndex);
 

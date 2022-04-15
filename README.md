@@ -115,6 +115,9 @@ Set the number of extra items to be rendered before/after the visible range.
 #### `enableResizeObserver = false`
 Set wether to update visible item indexes on element resize.
 
+#### `disableVirtualization = false`
+Set to disable virtualization (`visible-range-change` will still be dispatched).
+
 ## Events
 
 #### `visible-range-change: CustomEvent`
