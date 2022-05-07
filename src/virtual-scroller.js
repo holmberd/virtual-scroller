@@ -1,13 +1,16 @@
 import {
-  buildItemsScrollIndex,
-  calcVisibleItems,
+  // buildItemsScrollIndex,
+  // calcVisibleItems,
   calcScrollThresholds,
-  calcScrollOverflow,
+  // calcScrollOverflow,
 } from './vertical-virtualization';
 import {
   Virtualization,
   getScrollWindowSize,
   getScrollOffset,
+  calcVisibleItems,
+  buildItemsScrollOffsetIndex,
+  calcScrollOverflow,
 } from './virtualization';
 import { debounce } from './utils';
 
@@ -208,7 +211,7 @@ export default class VirtualScroller extends HTMLElement {
   reset() {}
 
   _updateItemsScrollOffsetIndex() {
-    this._itemsScrollOffsetIndex = buildItemsScrollIndex(
+    this._itemsScrollOffsetIndex = buildItemsScrollOffsetIndex(
       this.itemCount,
       this.getItemSize,
     );
@@ -220,7 +223,7 @@ export default class VirtualScroller extends HTMLElement {
   _update(scrollTopOffset) {
     const [startIndex, stopIndex] = calcVisibleItems(
       this._itemsScrollOffsetIndex,
-      this._height,
+      this._scrollWindowSize,
       scrollTopOffset ?? this.scrollTop
     );
     const [offsetStartIndex, offsetStopIndex] = this._calcOffsetItemIndexes(startIndex, stopIndex);

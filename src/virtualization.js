@@ -72,7 +72,7 @@ export function bSearch(array, callback, start = -1) {
  * Each index in the array represent the trailing edge scrolling position for that item.
  * @returns {number[]}
  */
-export function buildItemsScrollOffset(itemCount, getItemSize) {
+export function buildItemsScrollOffsetIndex(itemCount, getItemSize) {
   const itemsScrollOffset = [];
 
   for (let i = 0; i < itemCount; i++) {
@@ -120,7 +120,7 @@ export function calcScrollOverflow(itemsScrollOffset, startIndex, stopIndex) {
 
   const beforeVisibleItemsScrollOffset = getItemScrollOffset(itemsScrollOffset, startIndex - 1);
   const afterVisibleItemsScrollOffset = stopIndex >= itemCount - 1
-    ? 0 : calcDistanceBetween(itemsScrollOffset, stopIndex + 1, itemCount - 1);
+    ? 0 : calcScrollDistanceBetween(itemsScrollOffset, stopIndex + 1, itemCount - 1);
 
   return [beforeVisibleItemsScrollOffset, afterVisibleItemsScrollOffset];
 }
