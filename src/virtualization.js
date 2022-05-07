@@ -49,6 +49,83 @@ export function calcVisibleItems(itemsScrollOffset, scrollWindowSize, scrollOffs
   return [startIndex, stopIndex];
 }
 
+/**
+ * Returns thresholds for the scroll distance required to bring items
+ * fully inside or outside the element visible/viewport area.
+ * @returns {[number, number]} [top, bottom]
+ */
+export function calcScrollThresholds(
+  itemsScrollIndex,
+  clientLength,
+  startIndex,
+  stopIndex,
+  scrollDir = ScrollDirection.RIGHT,
+  scrollOffset
+) {
+  const { LEFT, UP, RIGHT, DOWN } = ScrollDirection;
+
+  const visibleItemsScrollLength = getScrollLength(itemsScrollIndex, startIndex, stopIndex);
+
+  // Initial case when scrollbar is at the top.
+  if (!scrollTopOffset && ([RIGHT, DOWN].includes(scrollDir))) {
+    return [0, visibleItemsScrollLength - clientLength];
+  }
+
+  const beforeVisibleItemsScrollLength = getItemScrollOffset(itemsScrollIndex, startIndex - 1);
+
+  // Essentially calculates e.g. `elem.scrollHeight - elem.offsetHeight`
+  // since calling either of those API's would trigger browser forced reflow/layout.
+  const firstVisibleItemNonVisibleScrollLength = scrollOffset - beforeVisibleItemsScrollLength;
+  const lastVisibleItemNonVisibleScrollLength =
+    visibleItemsScrollLength - clientLength - firstVisibleItemNonVisibleScrollLength;
+
+  if ([LEFT, UP].includes(scrollDir)) {
+    return [
+      firstVisibleItemNonVisibleScrollLength,
+      calcItemScrollLength(itemsScrollIndex, stopIndex) - lastVisibleItemNonVisibleScrollLength
+    ];
+  }
+
+  return [
+    calcItemScrollLength(itemsScrollIndex, startIndex) - firstVisibleItemNonVisibleScrollLength,
+    lastVisibleItemNonVisibleScrollLength,
+  ];
+}
+
+function calcItemScrollLength(itemsScrollIndex, index) {
+  return getItemScrollOffset(itemsScrollIndex, index) - getItemScrollOffset(itemsScrollIndex, index - 1);
+}
+
+export function calcScrollThresholds2(
+  itemsScrollIndex,
+  clientHeight,
+  startIndex,
+  stopIndex,
+  scrollDir = ScrollDir.DOWN,
+  scrollTopOffset
+) {
+  const visibleItemsHeight = calcHeightBetween(itemsScrollIndex, startIndex, stopIndex);
+
+  // Initial case when scrollbar is at the top.
+  if (!scrollTopOffset && scrollDir === ScrollDir.DOWN) {
+    return [0, visibleItemsHeight - clientHeight];
+  }
+
+  const aboveVisibleItemsHeight = getItemScrollTopOffset(itemsScrollIndex, startIndex - 1);
+  const firstVisibleItemTopOffset = scrollTopOffset - aboveVisibleItemsHeight;
+  const lastVisibleItemBottomOffset = visibleItemsHeight - clientHeight - firstVisibleItemTopOffset;
+
+  if (scrollDir === ScrollDir.UP) {
+    return [
+      firstVisibleItemTopOffset,
+      calcItemHeight(itemsScrollIndex, stopIndex) - lastVisibleItemBottomOffset
+    ];
+  }
+
+  const topScrollThreshold = calcItemHeight(itemsScrollIndex, startIndex) - firstVisibleItemTopOffset;
+  return [topScrollThreshold, lastVisibleItemBottomOffset];
+}
+
 
 /**
  * Performs a binary-search on the array by testing
@@ -98,10 +175,10 @@ export function getItemScrollOffset(itemsScrollOffset, index) {
 }
 
 /**
- * Calculates the inclusive scroll-distance between two indexes.
+ * Calculates and returns the inclusive scroll length between two indexes.
  * @returns {number}
  */
-export function calcScrollDistanceBetween(itemsScrollOffset, startIndex, stopIndex) {
+export function getScrollLength(itemsScrollOffset, startIndex, stopIndex) {
   validateIndexes(itemsScrollOffset.length, startIndex, stopIndex);
 
   const stopIndexScrollOffset = getItemScrollOffset(itemsScrollOffset, stopIndex);
@@ -120,7 +197,7 @@ export function calcScrollOverflow(itemsScrollOffset, startIndex, stopIndex) {
 
   const beforeVisibleItemsScrollOffset = getItemScrollOffset(itemsScrollOffset, startIndex - 1);
   const afterVisibleItemsScrollOffset = stopIndex >= itemCount - 1
-    ? 0 : calcScrollDistanceBetween(itemsScrollOffset, stopIndex + 1, itemCount - 1);
+    ? 0 : getScrollLength(itemsScrollOffset, stopIndex + 1, itemCount - 1);
 
   return [beforeVisibleItemsScrollOffset, afterVisibleItemsScrollOffset];
 }
