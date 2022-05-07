@@ -1,10 +1,14 @@
 import {
-  ScrollDir,
   buildItemsScrollIndex,
   calcVisibleItems,
   calcScrollThresholds,
   calcScrollOverflow,
 } from './vertical-virtualization';
+import {
+  Virtualization,
+  getScrollWindowSize,
+  getScrollOffset,
+} from './virtualization';
 import { debounce } from './utils';
 
 export const VISIBLE_RANGE_CHANGE_EVENT = 'visible-range-change';
@@ -52,12 +56,12 @@ export default class VirtualScroller extends HTMLElement {
     const shadowRoot = this.attachShadow({ mode: 'open' });
     shadowRoot.appendChild(document.importNode(template.content, true));
 
+    this._getItemSize = () => 0;
     this._visibleStartIndex = 0;
     this._visibleStopIndex = 0;
     this._offsetVisibleIndex = 0;
     this._itemCount = 0;
-    this._getItemHeight = () => 0;
-    this._itemsScrollIndex = [];
+    this._itemsScrollOffsetIndex = [];
     this._lastScrollOffset = 0;
     this._clientHeightCache = null;
     this._lastUpdate = new LastUpdate();
@@ -66,6 +70,7 @@ export default class VirtualScroller extends HTMLElement {
     this._topOverflowElement = null;
     this._bottomOverflowElement = null;
     this._disableVirtualization = false;
+    this._virtualization = Virtualization.HORIZONTAL;
   }
 
   get _height() {
@@ -76,16 +81,28 @@ export default class VirtualScroller extends HTMLElement {
     this._clientHeightCache = value;
   }
 
-  get getItemHeight() {
-    return this._getItemHeight;
+  get _width() {
+    return this._clientWidthCache ?? this.clientWidth;
   }
 
-  set getItemHeight(fn) {
-    if (fn === this._getItemHeight) {
+  set _width(value) {
+    this._clientWidthCache = value;
+  }
+
+  get _scrollWindowSize() {
+    return getScrollWindowSize(this._virtualization, this._width, this._height);
+  }
+
+  get getItemSize() {
+    return this._getItemSize;
+  }
+
+  set getItemSize(cb) {
+    if (cb === this._getItemSize) {
       return;
     }
-    this._getItemHeight = fn;
-    this._updateItemsScrollIndex();
+    this._getItemSize = cb;
+    this._updateItemsScrollOffsetIndex();
     this._update();
   }
 
@@ -101,7 +118,7 @@ export default class VirtualScroller extends HTMLElement {
       return;
     }
     this._itemCount = value;
-    this._updateItemsScrollIndex();
+    this._updateItemsScrollOffsetIndex();
     this._update();
   }
 
@@ -139,9 +156,18 @@ export default class VirtualScroller extends HTMLElement {
     this._disableVirtualization = Boolean(value);
   }
 
+  get virtualization() {
+    return this._virtualization;
+  }
+
+  _getScrollOffset() {
+    return getScrollOffset(this._virtualization, this.scrollLeft, this.scrollTop);
+  }
+
   connectedCallback() {
     // Store clientHeight for future calculations to prevent reflow.
     this._height = this.clientHeight;
+    this._width = this.clientWidth;
     this._lastScrollOffset = this.scrollTop;
     this._topOverflowElement = this.shadowRoot.querySelector('#top-overflow');
     this._bottomOverflowElement = this.shadowRoot.querySelector('#bottom-overflow');
@@ -165,16 +191,27 @@ export default class VirtualScroller extends HTMLElement {
   /**
    * @public
    */
-  init(itemCount, getItemHeight, offsetVisibleIndex = 0) {
+  init(itemCount, getItemSize, offsetVisibleIndex = 0, virtualization = Virtualization.HORIZONTAL) {
+    if (!Object.values(Virtualization).includes(virtualization)) {
+      throw Error(`Invalid virtualization. Must be one of: ${Object.values(Virtualization)}`);
+    }
+
+    this.reset();
     this._itemCount = itemCount;
-    this._getItemHeight = getItemHeight;
     this._offsetVisibleIndex = offsetVisibleIndex;
-    this._updateItemsScrollIndex();
+    this._virtualization = virtualization;
+    this._getItemSize = getItemSize;
+    this._updateItemsScrollOffsetIndex();
     this._update();
   }
 
-  _updateItemsScrollIndex() {
-    this._itemsScrollIndex = buildItemsScrollIndex(this.itemCount, this.getItemHeight);
+  reset() {}
+
+  _updateItemsScrollOffsetIndex() {
+    this._itemsScrollOffsetIndex = buildItemsScrollIndex(
+      this.itemCount,
+      this.getItemSize,
+    );
   }
 
   /**
@@ -182,7 +219,7 @@ export default class VirtualScroller extends HTMLElement {
    */
   _update(scrollTopOffset) {
     const [startIndex, stopIndex] = calcVisibleItems(
-      this._itemsScrollIndex,
+      this._itemsScrollOffsetIndex,
       this._height,
       scrollTopOffset ?? this.scrollTop
     );
@@ -221,28 +258,27 @@ export default class VirtualScroller extends HTMLElement {
   }
 
   _handleScroll(e) {
-    const scrollTopOffset = this.scrollTop;
-    if (scrollTopOffset === this._lastScrollOffset) {
+    const scrollOffset = this._getScrollOffset();
+    if (scrollOffset === this._lastScrollOffset) {
       return;
     }
-    const scrollDistance = scrollTopOffset - this._lastScrollOffset;
-    const isScrollDirDown = scrollDistance > 0;
-    this._lastScrollOffset = scrollTopOffset;
+    const relativeScrollOffset = scrollOffset - this._lastScrollOffset;
+    this._lastScrollOffset = scrollOffset;
 
     const [
-      topThreshold,
-      bottomThreshold
+      firstThreshold,
+      secondThreshold
     ] = calcScrollThresholds(
-      this._itemsScrollIndex,
-      this._height,
+      this._itemsScrollOffsetIndex,
+      this._scrollWindowSize,
       this._visibleStartIndex,
       this._visibleStopIndex,
-      isScrollDirDown ? ScrollDir.DOWN : ScrollDir.UP,
-      scrollTopOffset,
+      relativeScrollOffset,
+      scrollOffset,
     );
 
-    if (bottomThreshold < 0 || topThreshold < 0) {
-      this._update(scrollTopOffset);
+    if (secondThreshold < 0 || firstThreshold < 0) {
+      this._update(scrollOffset);
     }
   }
 
@@ -262,7 +298,7 @@ export default class VirtualScroller extends HTMLElement {
 
   _updateScrollOverflow(startIndex, stopIndex) {
     const [topOverflowHeight, bottomOverflowHeight] = calcScrollOverflow(
-      this._itemsScrollIndex,
+      this._itemsScrollOffsetIndex,
       startIndex,
       stopIndex
     );

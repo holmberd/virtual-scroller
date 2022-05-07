@@ -5,10 +5,50 @@ export const ScrollDirection = {
   DOWN: 'down',
 };
 
+export const Virtualization = {
+  HORIZONTAL: 'horizontal',
+  VERTICAL: 'vertical',
+};
+
 export const TextDirection = {
   LTR: 'ltr',
   RTL: 'rtl',
 };
+
+/**
+ * Calculates and returns the start-/stop-index for items within the element's visible window.
+ * @returns {[number, number]} [startIndex, stopIndex]
+ */
+export function calcVisibleItems(itemsScrollOffset, scrollWindowSize, scrollOffset) {
+  // Handles the initial case when no scrolling has occured.
+  if (!scrollOffset) {
+    let startIndex = 0;
+    let stopIndex = startIndex;
+    const itemCount = itemsScrollOffset.length;
+
+    while (stopIndex < itemCount) {
+      if (getItemScrollOffset(itemsScrollOffset, stopIndex) > scrollWindowSize) {
+        break;
+      }
+      stopIndex++;
+    }
+
+    return [startIndex, stopIndex];
+  }
+
+  const startIndex = bSearch(
+    itemsScrollOffset,
+    itemScrollOffset => itemScrollOffset > scrollOffset
+  );
+  const stopIndex = bSearch(
+    itemsScrollOffset,
+    itemScrollOffset => itemScrollOffset > scrollOffset + scrollWindowSize,
+    startIndex
+  );
+
+  return [startIndex, stopIndex];
+}
+
 
 /**
  * Performs a binary-search on the array by testing
@@ -28,55 +68,44 @@ export function bSearch(array, callback, start = -1) {
 }
 
 /**
- * Builds and returns an array of each item's scroll index.
+ * Builds and returns an array of scroll-offset for each item index.
+ * Each index in the array represent the trailing edge scrolling position for that item.
  * @returns {number[]}
  */
-export function buildItemsScrollIndex(itemCount, getItemSize, textDir = TextDirection.LTR) {
-  const itemsScrollIndex = [];
-
-  if (textDir === TextDirection.RTL) {
-    for (let i = itemCount - 1; i <= 0; i--) {
-      if (i === itemCount - 1) {
-        itemsScrollIndex[i] = getItemSize(i);
-        continue;
-      }
-      itemsScrollIndex[i] = itemsScrollIndex[i - 1] + getItemSize(i);
-    }
-
-    return itemsScrollIndex;
-  }
+export function buildItemsScrollOffset(itemCount, getItemSize) {
+  const itemsScrollOffset = [];
 
   for (let i = 0; i < itemCount; i++) {
     if (i === 0) {
-      itemsScrollIndex[i] = getItemSize(i);
+      itemsScrollOffset[i] = getItemSize(i);
       continue;
     }
-    itemsScrollIndex[i] = itemsScrollIndex[i - 1] + getItemSize(i);
+    itemsScrollOffset[i] = itemsScrollOffset[i - 1] + getItemSize(i);
   }
 
-  return itemsScrollIndex;
+  return itemsScrollOffset;
 }
 
 /**
  * Returns the scroll offset for the item at the specified index.
  * @returns {number}
  */
-export function getItemScrollOffset(itemsScrollIndex, index) {
-  if (!itemsScrollIndex) {
-    throw Error('Missing required argument: itemsScrollIndex');
+export function getItemScrollOffset(itemsScrollOffset, index) {
+  if (!itemsScrollOffset) {
+    throw Error('Missing required argument: itemsScrollOffset');
   }
-  return itemsScrollIndex[index] || 0;
+  return itemsScrollOffset[index] || 0;
 }
 
 /**
- * Calculates the inclusive range between two indexes.
+ * Calculates the inclusive scroll-distance between two indexes.
  * @returns {number}
  */
-export function calcRangeBetween(itemsScrollIndex, startIndex, stopIndex) {
-  validateIndexes(itemsScrollIndex.length, startIndex, stopIndex);
+export function calcScrollDistanceBetween(itemsScrollOffset, startIndex, stopIndex) {
+  validateIndexes(itemsScrollOffset.length, startIndex, stopIndex);
 
-  const stopIndexScrollOffset = getItemScrollOffset(itemsScrollIndex, stopIndex);
-  const startIndexScrollOffset = getItemScrollOffset(itemsScrollIndex, startIndex - 1);
+  const stopIndexScrollOffset = getItemScrollOffset(itemsScrollOffset, stopIndex);
+  const startIndexScrollOffset = getItemScrollOffset(itemsScrollOffset, startIndex - 1);
 
   return stopIndexScrollOffset - startIndexScrollOffset;
 }
@@ -85,13 +114,13 @@ export function calcRangeBetween(itemsScrollIndex, startIndex, stopIndex) {
  * Calculates scroll width overflow before/after visible items.
  * @returns {[number, number]} [before, after]
  */
-export function calcScrollOverflow(itemsScrollIndex, startIndex, stopIndex) {
-  const itemCount = itemsScrollIndex.length;
+export function calcScrollOverflow(itemsScrollOffset, startIndex, stopIndex) {
+  const itemCount = itemsScrollOffset.length;
   validateIndexes(itemCount, startIndex, stopIndex);
 
-  const beforeVisibleItemsScrollOffset = getItemScrollOffset(itemsScrollIndex, startIndex - 1);
+  const beforeVisibleItemsScrollOffset = getItemScrollOffset(itemsScrollOffset, startIndex - 1);
   const afterVisibleItemsScrollOffset = stopIndex >= itemCount - 1
-    ? 0 : calcRangeBetween(itemsScrollIndex, stopIndex + 1, itemCount - 1);
+    ? 0 : calcDistanceBetween(itemsScrollOffset, stopIndex + 1, itemCount - 1);
 
   return [beforeVisibleItemsScrollOffset, afterVisibleItemsScrollOffset];
 }
@@ -104,4 +133,23 @@ export function validateIndexes(itemCount, startIndex, stopIndex) {
     throw Error('startIndex must be > -1 and -1 < stopIndex < itemCount');
   }
   return true;
+}
+
+function isVertical(virtualization) {
+  return Virtualization.VERTICAL === virtualization;
+}
+
+export function getScrollDirection(scrollDistance) {
+  if (isVertical()) {
+    return scrollDistance > 0 ? ScrollDirection.RIGHT : ScrollDirection.LEFT;
+  }
+  return scrollDistance > 0 ? ScrollDirection.DOWN : ScrollDirection.UP;
+}
+
+export function getScrollWindowSize(virtualization, width, height) {
+  return isVertical(virtualization) ? width : height;
+}
+
+export function getScrollOffset(virtualization, scrollLeft, scrollTop) {
+  return isVertical(virtualization) ? scrollLeft : scrollTop;
 }
