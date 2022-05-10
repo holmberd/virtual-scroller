@@ -1,16 +1,17 @@
-import {
+// import {
   // buildItemsScrollIndex,
   // calcVisibleItems,
-  calcScrollThresholds,
+  // calcScrollThresholds,
   // calcScrollOverflow,
-} from './vertical-virtualization';
+// } from './vertical-virtualization';
 import {
   Virtualization,
-  getScrollWindowSize,
+  getScrollWindowLength,
   getScrollOffset,
   calcVisibleItems,
   buildItemsScrollOffsetIndex,
   calcScrollOverflow,
+  calcScrollThresholds
 } from './virtualization';
 import { debounce } from './utils';
 
@@ -59,7 +60,7 @@ export default class VirtualScroller extends HTMLElement {
     const shadowRoot = this.attachShadow({ mode: 'open' });
     shadowRoot.appendChild(document.importNode(template.content, true));
 
-    this._getItemSize = () => 0;
+    this._getItemLength = () => 0;
     this._visibleStartIndex = 0;
     this._visibleStopIndex = 0;
     this._offsetVisibleIndex = 0;
@@ -92,19 +93,19 @@ export default class VirtualScroller extends HTMLElement {
     this._clientWidthCache = value;
   }
 
-  get _scrollWindowSize() {
-    return getScrollWindowSize(this._virtualization, this._width, this._height);
+  get _scrollWindowLength() {
+    return getScrollWindowLength(this._virtualization, this._width, this._height);
   }
 
-  get getItemSize() {
-    return this._getItemSize;
+  get getItemLength() {
+    return this._getItemLength;
   }
 
-  set getItemSize(cb) {
-    if (cb === this._getItemSize) {
+  set getItemLength(cb) {
+    if (cb === this._getItemLength) {
       return;
     }
-    this._getItemSize = cb;
+    this._getItemLength = cb;
     this._updateItemsScrollOffsetIndex();
     this._update();
   }
@@ -194,7 +195,7 @@ export default class VirtualScroller extends HTMLElement {
   /**
    * @public
    */
-  init(itemCount, getItemSize, offsetVisibleIndex = 0, virtualization = Virtualization.HORIZONTAL) {
+  init(itemCount, getItemLength, offsetVisibleIndex = 0, virtualization = Virtualization.HORIZONTAL) {
     if (!Object.values(Virtualization).includes(virtualization)) {
       throw Error(`Invalid virtualization. Must be one of: ${Object.values(Virtualization)}`);
     }
@@ -203,7 +204,7 @@ export default class VirtualScroller extends HTMLElement {
     this._itemCount = itemCount;
     this._offsetVisibleIndex = offsetVisibleIndex;
     this._virtualization = virtualization;
-    this._getItemSize = getItemSize;
+    this._getItemLength = getItemLength;
     this._updateItemsScrollOffsetIndex();
     this._update();
   }
@@ -213,7 +214,7 @@ export default class VirtualScroller extends HTMLElement {
   _updateItemsScrollOffsetIndex() {
     this._itemsScrollOffsetIndex = buildItemsScrollOffsetIndex(
       this.itemCount,
-      this.getItemSize,
+      this.getItemLength,
     );
   }
 
@@ -223,7 +224,7 @@ export default class VirtualScroller extends HTMLElement {
   _update(scrollTopOffset) {
     const [startIndex, stopIndex] = calcVisibleItems(
       this._itemsScrollOffsetIndex,
-      this._scrollWindowSize,
+      this._scrollWindowLength,
       scrollTopOffset ?? this.scrollTop
     );
     const [offsetStartIndex, offsetStopIndex] = this._calcOffsetItemIndexes(startIndex, stopIndex);
@@ -273,7 +274,7 @@ export default class VirtualScroller extends HTMLElement {
       secondThreshold
     ] = calcScrollThresholds(
       this._itemsScrollOffsetIndex,
-      this._scrollWindowSize,
+      this._scrollWindowLength,
       this._visibleStartIndex,
       this._visibleStopIndex,
       relativeScrollOffset,
