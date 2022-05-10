@@ -10,7 +10,7 @@ describe('virtual-scroller tests', () => {
 
   let events = {};
   let items = [];
-  const getItemSize = (index) => index % 2 === 0 ? 50 : 100;
+  const getItemLength = (index) => index % 2 === 0 ? 50 : 100;
 
   beforeAll(() => {
     items = Array(1000).fill(true).map((_, index) => ({ id: index }));
@@ -63,12 +63,12 @@ describe('virtual-scroller tests', () => {
       done();
     });
 
-    virtualScroller.init(items.length, getItemSize);
+    virtualScroller.init(items.length, getItemLength);
   });
 
   it('should re-calculate the range of visible items when the itemCount property changed ', (done) => {
     const virtualScroller = document.querySelector('virtual-scroller');
-    virtualScroller.init(items.length, getItemSize);
+    virtualScroller.init(items.length, getItemLength);
 
     virtualScroller.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
       expect(startIndex).toBe(0);
@@ -79,9 +79,9 @@ describe('virtual-scroller tests', () => {
     virtualScroller.itemCount = 3;
   });
 
-  it('should re-calculate the range of visible items when the getItemSize property changed ', (done) => {
+  it('should re-calculate the range of visible items when the getItemLength property changed ', (done) => {
     const virtualScroller = document.querySelector('virtual-scroller');
-    virtualScroller.init(items.length, getItemSize);
+    virtualScroller.init(items.length, getItemLength);
 
     virtualScroller.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
       expect(startIndex).toBe(0);
@@ -89,13 +89,13 @@ describe('virtual-scroller tests', () => {
       done();
     });
 
-    virtualScroller.getItemSize = (index) => 100;
+    virtualScroller.getItemLength = (index) => 100;
   });
 
   it('should re-calculate the range of visible items when the offsetVisibleIndex property changed ', (done) => {
     const offsetVisibleIndex = 5;
     const virtualScroller = document.querySelector('virtual-scroller');
-    virtualScroller.init(items.length, getItemSize);
+    virtualScroller.init(items.length, getItemLength);
 
     virtualScroller.addEventListener(
       VISIBLE_RANGE_CHANGE_EVENT,
