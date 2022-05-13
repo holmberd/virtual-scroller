@@ -69,7 +69,7 @@ export default class VirtualScroller extends HTMLElement {
     this._topOverflowElement = null;
     this._bottomOverflowElement = null;
     this._disableVirtualization = false;
-    this._virtualization = Virtualization.HORIZONTAL;
+    this._virtualization = Virtualization.VERTICAL;
   }
 
   get _height() {
@@ -190,7 +190,7 @@ export default class VirtualScroller extends HTMLElement {
   /**
    * @public
    */
-  init(itemCount, getItemLength, offsetVisibleIndex = 0, virtualization = Virtualization.HORIZONTAL) {
+  init(itemCount, getItemLength, offsetVisibleIndex = 0, virtualization = Virtualization.VERTICAL) {
     if (!Object.values(Virtualization).includes(virtualization)) {
       throw Error(`Invalid virtualization. Must be one of: ${Object.values(Virtualization)}`);
     }

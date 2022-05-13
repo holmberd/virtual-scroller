@@ -154,11 +154,11 @@ export function validateIndexes(itemCount, startIndex, stopIndex) {
 }
 
 export function getScrollWindowLength(virtualization, width, height) {
-  return isVertical(virtualization) ? width : height;
+  return isVertical(virtualization) ? height : width;
 }
 
 export function getScrollOffset(virtualization, scrollLeft, scrollTop) {
-  return isVertical(virtualization) ? scrollLeft : scrollTop;
+  return isVertical(virtualization) ? scrollTop : scrollLeft;
 }
 
 function isVertical(virtualization) {
