@@ -1,20 +1,15 @@
-// import {
-  // buildItemsScrollIndex,
-  // calcVisibleItems,
-  // calcScrollThresholds,
-  // calcScrollOverflow,
-// } from './vertical-virtualization';
 import {
   Virtualization,
   getScrollWindowLength,
   getScrollOffset,
-  calcVisibleItems,
+  getVisibleItems,
+  getScrollOverflow,
+  getScrollThresholds,
   buildItemsScrollOffsetIndex,
-  calcScrollOverflow,
-  calcScrollThresholds
 } from './virtualization';
 import { debounce } from './utils';
 
+export { Virtualization } from './virtualization';
 export const VISIBLE_RANGE_CHANGE_EVENT = 'visible-range-change';
 
 class LastUpdate {
@@ -222,12 +217,12 @@ export default class VirtualScroller extends HTMLElement {
    * @emits visible-range-change
    */
   _update(scrollTopOffset) {
-    const [startIndex, stopIndex] = calcVisibleItems(
+    const [startIndex, stopIndex] = getVisibleItems(
       this._itemsScrollOffsetIndex,
       this._scrollWindowLength,
       scrollTopOffset ?? this.scrollTop
     );
-    const [offsetStartIndex, offsetStopIndex] = this._calcOffsetItemIndexes(startIndex, stopIndex);
+    const [offsetStartIndex, offsetStopIndex] = this._getOffsetItemIndexes(startIndex, stopIndex);
 
     if (this._lastUpdate.isEqual(offsetStartIndex, offsetStopIndex, this.offsetVisibleIndex)) {
       return;
@@ -255,7 +250,7 @@ export default class VirtualScroller extends HTMLElement {
     this._visibleStopIndex = stopIndex;
   }
 
-  _calcOffsetItemIndexes(startIndex, stopIndex) {
+  _getOffsetItemIndexes(startIndex, stopIndex) {
     const offsetStartIndex = Math.max(0, startIndex - this.offsetVisibleIndex);
     const offsetStopIndex = Math.min(Math.max(0, this.itemCount - 1), stopIndex + this.offsetVisibleIndex);
     return [offsetStartIndex, offsetStopIndex];
@@ -266,19 +261,19 @@ export default class VirtualScroller extends HTMLElement {
     if (scrollOffset === this._lastScrollOffset) {
       return;
     }
-    const relativeScrollOffset = scrollOffset - this._lastScrollOffset;
+    const scrollDistance = scrollOffset - this._lastScrollOffset;
     this._lastScrollOffset = scrollOffset;
 
     const [
       firstThreshold,
       secondThreshold
-    ] = calcScrollThresholds(
+    ] = getScrollThresholds(
       this._itemsScrollOffsetIndex,
       this._scrollWindowLength,
       this._visibleStartIndex,
       this._visibleStopIndex,
-      relativeScrollOffset,
       scrollOffset,
+      scrollDistance,
     );
 
     if (secondThreshold < 0 || firstThreshold < 0) {
@@ -301,7 +296,7 @@ export default class VirtualScroller extends HTMLElement {
   }
 
   _updateScrollOverflow(startIndex, stopIndex) {
-    const [topOverflowHeight, bottomOverflowHeight] = calcScrollOverflow(
+    const [topOverflowHeight, bottomOverflowHeight] = getScrollOverflow(
       this._itemsScrollOffsetIndex,
       startIndex,
       stopIndex

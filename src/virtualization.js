@@ -1,25 +1,13 @@
-export const ScrollDirection = {
-  LEFT: 'left',
-  RIGHT: 'right',
-  UP: 'up',
-  DOWN: 'down',
-};
-
 export const Virtualization = {
   HORIZONTAL: 'horizontal',
   VERTICAL: 'vertical',
-};
-
-export const TextDirection = {
-  LTR: 'ltr',
-  RTL: 'rtl',
 };
 
 /**
  * Calculates and returns the start-/stop-index for items within the element's visible scroll-window.
  * @returns {[number, number]} [startIndex, stopIndex]
  */
-export function calcVisibleItems(itemsScrollOffsetIndex, scrollWindowLength, scrollOffset) {
+export function getVisibleItems(itemsScrollOffsetIndex, scrollWindowLength, scrollOffset) {
   // Handles the initial case when no scrolling has occured.
   if (!scrollOffset) {
     let startIndex = 0;
@@ -50,24 +38,23 @@ export function calcVisibleItems(itemsScrollOffsetIndex, scrollWindowLength, scr
 }
 
 /**
- * Returns thresholds for the scroll distance required to bring items
- * fully inside or outside the element visible/viewport area.
+ * Calculates and returns thresholds for the scroll distance required to bring
+ * items fully inside or outside the element visible/viewport area.
  * @returns {[number, number]} [top, bottom]
  */
-export function calcScrollThresholds(
+export function getScrollThresholds(
   itemsScrollIndex,
   clientLength,
   startIndex,
   stopIndex,
-  scrollDir = ScrollDirection.RIGHT,
-  scrollOffset
+  scrollOffset,
+  scrollDistance,
 ) {
-  const { LEFT, UP, RIGHT, DOWN } = ScrollDirection;
-
+  const positiveScroll = scrollDistance > 0;
   const visibleItemsScrollLength = getScrollLength(itemsScrollIndex, startIndex, stopIndex);
 
   // Handles case when in start-position.
-  if (!scrollOffset && ([RIGHT, DOWN].includes(scrollDir))) {
+  if (!scrollOffset && positiveScroll) {
     return [0, visibleItemsScrollLength - clientLength];
   }
 
@@ -79,22 +66,22 @@ export function calcScrollThresholds(
   const lastVisibleItemNonVisibleScrollLength =
     visibleItemsScrollLength - clientLength - firstVisibleItemNonVisibleScrollLength;
 
-  // Scrolling down/right.
-  if (![LEFT, UP].includes(scrollDir)) {
+  // Scrolling up/left.
+  if (!positiveScroll) {
     return [
-      calcItemScrollLength(itemsScrollIndex, startIndex) - firstVisibleItemNonVisibleScrollLength,
-      lastVisibleItemNonVisibleScrollLength,
+      firstVisibleItemNonVisibleScrollLength,
+      getItemScrollLength(itemsScrollIndex, stopIndex) - lastVisibleItemNonVisibleScrollLength
     ];
   }
 
-  // Scrolling up/left.
+  // Scrolling down/right.
   return [
-    firstVisibleItemNonVisibleScrollLength,
-    calcItemScrollLength(itemsScrollIndex, stopIndex) - lastVisibleItemNonVisibleScrollLength
+    getItemScrollLength(itemsScrollIndex, startIndex) - firstVisibleItemNonVisibleScrollLength,
+    lastVisibleItemNonVisibleScrollLength,
   ];
 }
 
-function calcItemScrollLength(itemsScrollIndex, index) {
+function getItemScrollLength(itemsScrollIndex, index) {
   return getItemScrollOffset(itemsScrollIndex, index) - getItemScrollOffset(itemsScrollIndex, index - 1);
 }
 
@@ -142,10 +129,10 @@ export function getScrollLength(itemsScrollOffsetIndex, startIndex, stopIndex) {
 }
 
 /**
- * Calculates scroll width overflow before/after visible items.
+ * Calculates and returns scroll width/height overflow before/after visible items.
  * @returns {[number, number]} [before, after]
  */
-export function calcScrollOverflow(itemsScrollOffsetIndex, startIndex, stopIndex) {
+export function getScrollOverflow(itemsScrollOffsetIndex, startIndex, stopIndex) {
   const itemCount = itemsScrollOffsetIndex.length;
   validateIndexes(itemCount, startIndex, stopIndex);
 
@@ -166,17 +153,6 @@ export function validateIndexes(itemCount, startIndex, stopIndex) {
   return true;
 }
 
-function isVertical(virtualization) {
-  return Virtualization.VERTICAL === virtualization;
-}
-
-export function getScrollDirection(scrollDistance) {
-  if (isVertical()) {
-    return scrollDistance > 0 ? ScrollDirection.RIGHT : ScrollDirection.LEFT;
-  }
-  return scrollDistance > 0 ? ScrollDirection.DOWN : ScrollDirection.UP;
-}
-
 export function getScrollWindowLength(virtualization, width, height) {
   return isVertical(virtualization) ? width : height;
 }
@@ -185,11 +161,15 @@ export function getScrollOffset(virtualization, scrollLeft, scrollTop) {
   return isVertical(virtualization) ? scrollLeft : scrollTop;
 }
 
+function isVertical(virtualization) {
+  return Virtualization.VERTICAL === virtualization;
+}
+
 /**
  * Performs a binary-search on the array by testing
  * each element in the array against the provided function.
  */
-export function bSearch(array, callback, start = -1) {
+function bSearch(array, callback, start = -1) {
   let end = array.length - 1;
   while (start + 1 < end) {
     const mid = start + ((end - start) >> 1);

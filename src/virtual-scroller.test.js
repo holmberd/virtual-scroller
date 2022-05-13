@@ -2,7 +2,9 @@
  * @jest-environment jsdom
  */
 
-import VirtualScroller, { VISIBLE_RANGE_CHANGE_EVENT } from './virtual-scroller';
+// TODO: Add scroll test for threshold.
+
+import VirtualScroller, { VISIBLE_RANGE_CHANGE_EVENT, Virtualization } from './virtual-scroller';
 
 describe('virtual-scroller tests', () => {
   const VIRTUAL_SCROLLER_HEIGHT = 400;
@@ -53,7 +55,7 @@ describe('virtual-scroller tests', () => {
     expect(document.querySelector('virtual-scroller')).toBeTruthy();
   });
 
-  it('should calculate the range of visible items during init (scrollTop = 0)', (done) => {
+  it('should calculate the range of visible items during init in Vertical mode', (done) => {
     expect.assertions(2);
     const virtualScroller = document.querySelector('virtual-scroller');
     virtualScroller.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
@@ -64,6 +66,19 @@ describe('virtual-scroller tests', () => {
     });
 
     virtualScroller.init(items.length, getItemLength);
+  });
+
+  it('should calculate the range of visible items during init in Horizontal mode', (done) => {
+    expect.assertions(2);
+    const virtualScroller = document.querySelector('virtual-scroller');
+    virtualScroller.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
+      // 50 + 100 + 50 + 100 + 50 + 100 = 450
+      expect(startIndex).toBe(0); // scrollLeftOffset = 0
+      expect(stopIndex).toBe(5);
+      done();
+    });
+
+    virtualScroller.init(items.length, getItemLength, 0, Virtualization.HORIZONTAL);
   });
 
   it('should re-calculate the range of visible items when the itemCount property changed ', (done) => {
