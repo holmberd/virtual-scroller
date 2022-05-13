@@ -27,7 +27,7 @@ yarn add @holmberd/virtual-scroller
 
 ### React
 ```js
-  import VirtualScroller from 'virtual-scroller';
+  import VirtualScroller, { Virtualization } from 'virtual-scroller';
 
   const getItemHeight = (index) => index % 2 === 0 ? 50 : 100;
   const listItems = Array.from(Array(10000).map((index) => ({
@@ -48,7 +48,7 @@ yarn add @holmberd/virtual-scroller
         setItems(listItems.slice(startIndex, stopIndex + 1));
       });
 
-      scrollerRef.current.init(items.length, getItemHeight);
+      scrollerRef.current.init(items.length, getItemHeight, 0, Virtualization.VERTICAL);
     }, [])
 
   return (
@@ -93,21 +93,22 @@ virtualScroller.init(items.length, getItemHeight);
 
 ## Methods
 
-#### `init(itemCount: string, getItemHeight: function, offsetVisibleIndex = 0): void`
+#### `init(itemCount: string, getItemLength: function, offsetVisibleIndex = 0, virtualization = 'vertical'): void`
 Once called the virtual-scroller will calculate the visible range and dispatch a `visible-range-change` event. You can call this multiple times to reset the items scroll index, e.g. to increase item-count when a user scrolls down the list or when the height of an item changes.
 
-Takes in three arguments:
+Arguments:
 - `itemCount: number`: The total number of top-level items.
-- `getItemHeight(index: number): number`: Function to calculate and return the height of each item by index.
+- `getItemLength(index: number): number`: Function to calculate and return the length(height or width) of each item by index.
 - `offsetVisibleIndex: number`: Number of extra items to be rendered before/after the visible range.
+- `virtualization: string`: Determines whether to use `vertical` or `horizontal` virtualization.
 
 ## Properties
 
 #### `itemCount = 0`
 Set the total number of top-level items.
 
-#### `getItemHeight = (index) => 0`
-Set function to calculate and return the height of each item by index.
+#### `getItemLength = (index) => 0`
+Set function to calculate and return the length(height or width) of each item by index.
 
 #### `offsetVisibleIndex = 0`
 Set the number of extra items to be rendered before/after the visible range.
@@ -117,6 +118,9 @@ Set wether to update visible item indexes on element resize.
 
 #### `disableVirtualization = false`
 Set to disable virtualization (`visible-range-change` will still be dispatched).
+
+### `virtualization`
+Get current virtualization mode.
 
 ## Events
 
