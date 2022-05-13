@@ -104,7 +104,7 @@ describe('virtual-scroller tests', () => {
       done();
     });
 
-    virtualScroller.getItemLength = (index) => 100;
+    virtualScroller.getItemLength = () => 100;
   });
 
   it('should re-calculate the range of visible items when the offsetVisibleIndex property changed ', (done) => {
