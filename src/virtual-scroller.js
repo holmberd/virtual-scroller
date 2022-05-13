@@ -300,35 +300,19 @@ export default class VirtualScroller extends HTMLElement {
   }
 
   _updateScrollOverflow(startIndex, stopIndex) {
-    const [beforeOverflowLength, afterOverflowLength] = getScrollOverflow(
+    const [beforeScrollLength, afterScrollLength] = getScrollOverflow(
       this._itemsScrollOffsetIndex,
       startIndex,
       stopIndex
     );
 
-    if (Virtualization.isVertical(this.virtualization)) {
-      this._setBeforeOverflowHeight(beforeOverflowLength);
-      this._setAfterOverflowHeight(afterOverflowLength);
-    } else {
-      this._setBeforeOverflowWidth(beforeOverflowLength);
-      this._setAfterOverflowWidth(afterOverflowLength);
-    }
+    this._setScrollOverflow(beforeScrollLength, afterScrollLength);
   }
 
-  _setAfterOverflowHeight(height) {
-    this._afterOverflowElement.style.height = `${Math.max(0, height)}px`;
-  }
-
-  _setBeforeOverflowHeight(height) {
-    this._beforeOverflowElement.style.height = `${Math.max(0, height)}px`;
-  }
-
-  _setAfterOverflowWidth(width) {
-    this._afterOverflowElement.style.width = `${Math.max(0, width)}px`;
-  }
-
-  _setBeforeOverflowWidth(width) {
-    this._beforeOverflowElement.style.width = `${Math.max(0, width)}px`;
+  _setScrollOverflow(beforeScrollLength, afterScrollLength) {
+    const dimension = Virtualization.isVertical(this.virtualization) ? 'height' : 'width';
+    this._beforeOverflowElement.style[dimension] = `${Math.max(0, beforeScrollLength)}px`;
+    this._afterOverflowElement.style[dimension] = `${Math.max(0, afterScrollLength)}px`;
   }
 }
 
