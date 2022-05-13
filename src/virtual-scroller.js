@@ -67,6 +67,7 @@ export default class VirtualScroller extends HTMLElement {
     this._itemsScrollOffsetIndex = [];
     this._lastScrollOffset = 0;
     this._clientHeightCache = null;
+    this._clientWidthCache = null;
     this._lastUpdate = new LastUpdate();
     this._resizeObserver = null;
     this._enableResizeObserver = false;
