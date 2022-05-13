@@ -1,6 +1,10 @@
 export const Virtualization = {
   HORIZONTAL: 'horizontal',
   VERTICAL: 'vertical',
+
+  isVertical(virtualization) {
+    return Virtualization.VERTICAL === virtualization;
+  },
 };
 
 /**
@@ -129,7 +133,7 @@ export function getScrollLength(itemsScrollOffsetIndex, startIndex, stopIndex) {
 }
 
 /**
- * Calculates and returns scroll width/height overflow before/after visible items.
+ * Calculates and returns scroll width/height overflow before and after visible items.
  * @returns {[number, number]} [before, after]
  */
 export function getScrollOverflow(itemsScrollOffsetIndex, startIndex, stopIndex) {
@@ -154,15 +158,11 @@ export function validateIndexes(itemCount, startIndex, stopIndex) {
 }
 
 export function getScrollWindowLength(virtualization, width, height) {
-  return isVertical(virtualization) ? height : width;
+  return Virtualization.isVertical(virtualization) ? height : width;
 }
 
 export function getScrollOffset(virtualization, scrollLeft, scrollTop) {
-  return isVertical(virtualization) ? scrollTop : scrollLeft;
-}
-
-function isVertical(virtualization) {
-  return Virtualization.VERTICAL === virtualization;
+  return Virtualization.isVertical(virtualization) ? scrollTop : scrollLeft;
 }
 
 /**
