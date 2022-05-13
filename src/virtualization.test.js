@@ -22,8 +22,8 @@ describe('Virtualization calculations tests', () => {
   beforeAll(() => {
     items = Array(1000).fill(true).map((_, index) => ({ id: index }));
     const getItemLength = (index) => index % 2 === 0 ? SMALL_ITEM_LENGTH : LARGE_ITEM_LENGTH;
-    itemsScrollOffsetIndex = buildItemsScrollOffsetIndex(items.length, getItemLength)
-  })
+    itemsScrollOffsetIndex = buildItemsScrollOffsetIndex(items.length, getItemLength);
+  });
 
   afterAll(() => {
     items = [];

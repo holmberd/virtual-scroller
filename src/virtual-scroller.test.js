@@ -16,7 +16,7 @@ describe('virtual-scroller tests', () => {
 
   beforeAll(() => {
     items = Array(1000).fill(true).map((_, index) => ({ id: index }));
-  })
+  });
 
   afterAll(() => {
     items = [];

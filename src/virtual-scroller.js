@@ -184,7 +184,7 @@ export default class VirtualScroller extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.removeEventListener('scroll', this._handleScroll)
+    this.removeEventListener('scroll', this._handleScroll);
     if (this._resizeObserver) {
       this._resizeObserver.disconnect();
       this._resizeObserver = null;
@@ -207,8 +207,6 @@ export default class VirtualScroller extends HTMLElement {
     this._updateItemsScrollOffsetIndex();
     this._update();
   }
-
-  reset() {}
 
   _updateItemsScrollOffsetIndex() {
     this._itemsScrollOffsetIndex = buildItemsScrollOffsetIndex(
@@ -260,7 +258,7 @@ export default class VirtualScroller extends HTMLElement {
     return [offsetStartIndex, offsetStopIndex];
   }
 
-  _handleScroll(e) {
+  _handleScroll() {
     const scrollOffset = this._getScrollOffset();
     if (scrollOffset === this._lastScrollOffset) {
       return;
@@ -317,5 +315,5 @@ export default class VirtualScroller extends HTMLElement {
 }
 
 if (!customElements.get('virtual-scroller')) {
-  customElements.define('virtual-scroller', VirtualScroller)
+  customElements.define('virtual-scroller', VirtualScroller);
 }
