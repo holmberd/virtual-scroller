@@ -39,14 +39,18 @@ template.innerHTML = `
       contain: content;
       overflow: auto;
     }
-    #top-overflow, #bottom-overflow {
-      visibility: hidden;
+    ::slotted(*) {
+      box-sizing: border-box;
+    }
+    #before-overflow, #after-overflow {
+      visibility: hidden !important;
+      flex-shrink: 0 !important;
     }
   </style>
 
-  <div id='top-overflow'></div>
+  <div id='before-overflow'></div>
   <slot></slot>
-  <div id='bottom-overflow'></div>
+  <div id='after-overflow'></div>
 `;
 
 export default class VirtualScroller extends HTMLElement {
@@ -66,8 +70,8 @@ export default class VirtualScroller extends HTMLElement {
     this._lastUpdate = new LastUpdate();
     this._resizeObserver = null;
     this._enableResizeObserver = false;
-    this._topOverflowElement = null;
-    this._bottomOverflowElement = null;
+    this._beforeOverflowElement = null;
+    this._afterOverflowElement = null;
     this._disableVirtualization = false;
     this._virtualization = Virtualization.VERTICAL;
   }
@@ -168,8 +172,8 @@ export default class VirtualScroller extends HTMLElement {
     this._height = this.clientHeight;
     this._width = this.clientWidth;
     this._lastScrollOffset = this.scrollTop;
-    this._topOverflowElement = this.shadowRoot.querySelector('#top-overflow');
-    this._bottomOverflowElement = this.shadowRoot.querySelector('#bottom-overflow');
+    this._beforeOverflowElement = this.shadowRoot.querySelector('#before-overflow');
+    this._afterOverflowElement = this.shadowRoot.querySelector('#after-overflow');
 
     // If we needed to throttle this, e.g. 1000/60 = 16 ms at 60fps, ensure we get the last event.
     this.addEventListener('scroll', this._handleScroll);
@@ -296,21 +300,35 @@ export default class VirtualScroller extends HTMLElement {
   }
 
   _updateScrollOverflow(startIndex, stopIndex) {
-    const [topOverflowHeight, bottomOverflowHeight] = getScrollOverflow(
+    const [beforeOverflowLength, afterOverflowLength] = getScrollOverflow(
       this._itemsScrollOffsetIndex,
       startIndex,
       stopIndex
     );
-    this._setTopOverflowHeight(topOverflowHeight);
-    this._setBottomOverflowHeight(bottomOverflowHeight);
+
+    if (Virtualization.isVertical(this.virtualization)) {
+      this._setBeforeOverflowHeight(beforeOverflowLength);
+      this._setAfterOverflowHeight(afterOverflowLength);
+    } else {
+      this._setBeforeOverflowWidth(beforeOverflowLength);
+      this._setAfterOverflowWidth(afterOverflowLength);
+    }
   }
 
-  _setBottomOverflowHeight(height) {
-    this._bottomOverflowElement.style.height = `${Math.max(0, height)}px`;
+  _setAfterOverflowHeight(height) {
+    this._afterOverflowElement.style.height = `${Math.max(0, height)}px`;
   }
 
-  _setTopOverflowHeight(height) {
-    this._topOverflowElement.style.height = `${Math.max(0, height)}px`;
+  _setBeforeOverflowHeight(height) {
+    this._beforeOverflowElement.style.height = `${Math.max(0, height)}px`;
+  }
+
+  _setAfterOverflowWidth(width) {
+    this._afterOverflowElement.style.width = `${Math.max(0, width)}px`;
+  }
+
+  _setBeforeOverflowWidth(width) {
+    this._beforeOverflowElement.style.width = `${Math.max(0, width)}px`;
   }
 }
 
