@@ -96,7 +96,7 @@ virtualScroller.init(items.length, getItemHeight);
 
 ## Methods
 
-#### `init(itemCount: string, getItemLength: function, options: { offsetVisibleIndex = 0 virtualization = 'vertical', enableResizeObserver = false, disableVirtualization = false }): void`
+#### `init(itemCount: string, getItemLength: function, options: object): void`
 Once called the virtual-scroller will calculate the visible range and dispatch a `visible-range-change` event. You can call this multiple times to reset the items scroll index, e.g. to increase item-count when a user scrolls down the list or when the height of an item changes.
 
 Arguments:
@@ -104,10 +104,10 @@ Arguments:
 - `getItemLength(index: number): number`: Function to calculate and return the length(height or width) of each item by index.
 
 Options:
-- `offsetVisibleIndex: number`: Number of extra items to be rendered before/after the visible range.
-- `virtualization: string`: Determines whether to use `vertical` or `horizontal` virtualization.
-- `enableResizeObserver: boolean`: Set wether to update visible item indexes on element resize.
-- `disableVirtualization: boolean`: Set to disable virtualization, (`visible-range-change` will still be dispatched).
+- `offsetVisibleIndex = 0: number`: Number of extra items to be rendered before/after the visible range.
+- `virtualization = 'vertical': string`: Determines whether to use `vertical` or `horizontal` virtualization.
+- `enableResizeObserver = false: boolean`: Set wether to update visible item indexes on element resize.
+- `disableVirtualization = false: boolean`: Set to disable virtualization, (`visible-range-change` will still be dispatched).
 
 ## Properties
 
