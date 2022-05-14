@@ -48,7 +48,10 @@ yarn add @holmberd/virtual-scroller
         setItems(listItems.slice(startIndex, stopIndex + 1));
       });
 
-      scrollerRef.current.init(items.length, getItemHeight, 0, Virtualization.VERTICAL);
+      scrollerRef.current.init(listItems.length, getItemHeight, {
+        offsetVisibleIndex: 0,
+        virtualization: Virtualization.VERTICAL,
+      });
     }, [])
 
   return (
@@ -93,14 +96,17 @@ virtualScroller.init(items.length, getItemHeight);
 
 ## Methods
 
-#### `init(itemCount: string, getItemLength: function, offsetVisibleIndex = 0, virtualization = 'vertical'): void`
+#### `init(itemCount: string, getItemLength: function, options: { offsetVisibleIndex = 0 virtualization = 'vertical', enableResizeObserver = false }): void`
 Once called the virtual-scroller will calculate the visible range and dispatch a `visible-range-change` event. You can call this multiple times to reset the items scroll index, e.g. to increase item-count when a user scrolls down the list or when the height of an item changes.
 
 Arguments:
 - `itemCount: number`: The total number of top-level items.
 - `getItemLength(index: number): number`: Function to calculate and return the length(height or width) of each item by index.
+
+Options:
 - `offsetVisibleIndex: number`: Number of extra items to be rendered before/after the visible range.
 - `virtualization: string`: Determines whether to use `vertical` or `horizontal` virtualization.
+- `enableResizeObserver: boolean`: Set wether to update visible item indexes on element resize.
 
 ## Properties
 
@@ -117,7 +123,7 @@ Set the number of extra items to be rendered before/after the visible range.
 Set wether to update visible item indexes on element resize.
 
 #### `disableVirtualization = false`
-Set to disable virtualization (`visible-range-change` will still be dispatched).
+Set to disable virtualization, (`visible-range-change` will still be dispatched).
 
 ### `virtualization`
 Get current virtualization mode.
