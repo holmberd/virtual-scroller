@@ -6,7 +6,7 @@ import {
   getScrollLength
 } from './virtualization';
 
-describe('Virtualization calculations tests', () => {
+describe('Virtualization calculations unit tests', () => {
   const DOWN = 1, RIGHT = 1;
   const UP = -1, LEFT = -1;
   const CLIENT_LENGTH = 400;
@@ -239,6 +239,66 @@ describe('Virtualization calculations tests', () => {
       );
       expect(top).toBe(25);
       expect(bottom).toBe(75);
+    });
+
+    it('should calculate thresholds between indexes: [0, 5], scrollOffset = 50 when scrolling DOWN', () => {
+      // total: 50 + 100 + 50 + 100 + 50 + 100 = 450
+      // threshold: 450 - 400(client) - 50 = 0
+      const startIndex = 0, stopIndex = 5, scrollOffset = 50;
+      const [top, bottom] = getScrollThresholds(
+        itemsScrollOffsetIndex,
+        CLIENT_LENGTH,
+        startIndex,
+        stopIndex,
+        scrollOffset,
+        DOWN
+      );
+      expect(top).toBe(0);
+      expect(bottom).toBe(0);
+    });
+
+    it('should calculate thresholds between indexes: [0, 5], scrollOffset = 50 when scrolling UP', () => {
+      // total: 50 + 100 + 50 + 100 + 50 + 100 = 450
+      // threshold: 450 - 400(client) - 50 = 0
+      const startIndex = 0, stopIndex = 5, scrollOffset = 50;
+      const [top, bottom] = getScrollThresholds(
+        itemsScrollOffsetIndex,
+        CLIENT_LENGTH,
+        startIndex,
+        stopIndex,
+        scrollOffset,
+        UP
+      );
+      expect(top).toBe(50);
+      expect(bottom).toBe(100);
+    });
+
+    it('should calculate thresholds between indexes: [1, 6], scrollOffset = 51 when scrolling DOWN', () => {
+      const startIndex = 1, stopIndex = 6, scrollOffset = 51;
+      const [top, bottom] = getScrollThresholds(
+        itemsScrollOffsetIndex,
+        CLIENT_LENGTH,
+        startIndex,
+        stopIndex,
+        scrollOffset,
+        DOWN
+      );
+      expect(top).toBe(99);
+      expect(bottom).toBe(49);
+    });
+
+    it('should calculate thresholds between indexes: [1, 6], scrollOffset = 51 when scrolling UP', () => {
+      const startIndex = 1, stopIndex = 6, scrollOffset = 51;
+      const [top, bottom] = getScrollThresholds(
+        itemsScrollOffsetIndex,
+        CLIENT_LENGTH,
+        startIndex,
+        stopIndex,
+        scrollOffset,
+        UP
+      );
+      expect(top).toBe(1);
+      expect(bottom).toBe(1);
     });
 
     it('should calculate thresholds between indexes: [1, 7] and scrollOffset = 125 when scrolling DOWN', () => {
