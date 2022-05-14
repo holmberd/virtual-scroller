@@ -2,17 +2,23 @@
  * @jest-environment jsdom
  */
 
-// TODO: Add scroll test for threshold.
-
 import VirtualScroller, { VISIBLE_RANGE_CHANGE_EVENT, Virtualization } from './virtual-scroller';
 
-describe('virtual-scroller tests', () => {
+describe('virtual-scroller integration tests', () => {
   const VIRTUAL_SCROLLER_HEIGHT = 400;
   const VIRTUAL_SCROLLER_WIDTH = 400;
 
-  let events = {};
+  let virtualScroller = null;
   let items = [];
   const getItemLength = (index) => index % 2 === 0 ? 50 : 100;
+
+  const scrollTo = (element, scrollOffsetProperty, scrollOffset) => {
+    Object.defineProperty(element, scrollOffsetProperty, {
+      writable: false,
+      value: scrollOffset,
+    });
+    element.dispatchEvent(new Event('scroll', { bubbles: true }));
+  };
 
   beforeAll(() => {
     items = Array(1000).fill(true).map((_, index) => ({ id: index }));
@@ -23,7 +29,7 @@ describe('virtual-scroller tests', () => {
   });
 
   beforeEach(() => {
-    const virtualScroller = new VirtualScroller();
+    virtualScroller = new VirtualScroller();
 
     Object.defineProperty(virtualScroller, 'clientHeight', {
       writable: false,
@@ -34,85 +40,140 @@ describe('virtual-scroller tests', () => {
       writable: false,
       value: VIRTUAL_SCROLLER_WIDTH,
     });
-
-    document.body.appendChild(virtualScroller);
-
-    virtualScroller.addEventListener = jest.fn((event, callback) => {
-      events[event] = callback;
-    });
-
-    virtualScroller.dispatchEvent = jest.fn((event) => {
-      events[event.type] && events[event.type](event);
-    });
   });
 
   afterEach(() => {
-    events = {};
-    document.querySelector('virtual-scroller').remove();
+    virtualScroller = undefined;
+    document.querySelector('virtual-scroller')?.remove();
   });
 
   it('should be rendered in the DOM', () => {
+    document.body.appendChild(virtualScroller);
     expect(document.querySelector('virtual-scroller')).toBeTruthy();
   });
 
-  it('should calculate the range of visible items during init in Vertical mode', (done) => {
+  it('should update the range of visible items during init in Vertical mode', (done) => {
     expect.assertions(2);
-    const virtualScroller = document.querySelector('virtual-scroller');
-    virtualScroller.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
+    const vs = document.body.appendChild(virtualScroller);
+    vs.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
       // 50 + 100 + 50 + 100 + 50 + 100 = 450
       expect(startIndex).toBe(0); // scrollTop = 0
       expect(stopIndex).toBe(5); // bottomOffset = 50
       done();
     });
 
-    virtualScroller.init(items.length, getItemLength);
+    vs.init(items.length, getItemLength);
   });
 
-  it('should calculate the range of visible items during init in Horizontal mode', (done) => {
+  it('should update the range of visible items during init in Horizontal mode', (done) => {
     expect.assertions(2);
-    const virtualScroller = document.querySelector('virtual-scroller');
-    virtualScroller.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
+    const vs = document.body.appendChild(virtualScroller);
+    vs.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
       // 50 + 100 + 50 + 100 + 50 + 100 = 450
       expect(startIndex).toBe(0); // scrollLeftOffset = 0
       expect(stopIndex).toBe(5);
       done();
     });
 
-    virtualScroller.init(items.length, getItemLength, 0, Virtualization.HORIZONTAL);
+    vs.init(items.length, getItemLength, {
+      virtualization: Virtualization.HORIZONTAL
+    });
   });
 
-  it('should re-calculate the range of visible items when the itemCount property changed ', (done) => {
-    const virtualScroller = document.querySelector('virtual-scroller');
+  it('should update the range of visible items after being connected', (done) => {
     virtualScroller.init(items.length, getItemLength);
+    virtualScroller.addEventListener(
+      VISIBLE_RANGE_CHANGE_EVENT,
+      ({ detail: { startIndex, stopIndex } }) => {
+        expect(startIndex).toBe(0);
+        expect(stopIndex).toBe(5);
+        done();
+      }
+    );
 
-    virtualScroller.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
+    document.body.appendChild(virtualScroller);
+  });
+
+  it('should not update on init when not connected', () => {
+    const eventHandler = jest.fn();
+    virtualScroller.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, eventHandler);
+
+    virtualScroller.init(items.length, getItemLength);
+    expect(eventHandler).not.toHaveBeenCalled();
+  });
+
+  it('should update the range of visible items when itemCount is changed to zero', (done) => {
+    const vs = document.body.appendChild(virtualScroller);
+    vs.init(items.length, getItemLength);
+
+    virtualScroller.addEventListener(
+      VISIBLE_RANGE_CHANGE_EVENT,
+      ({ detail: { startIndex, stopIndex } }) => {
+        expect(startIndex).toBe(0);
+        expect(stopIndex).toBe(0);
+        done();
+      }
+    );
+
+    vs.itemCount = 0;
+  });
+
+  it('should update the range of visible items when scroll is past threshold', (done) => {
+    const vs = document.body.appendChild(virtualScroller);
+    vs.init(items.length, getItemLength);
+
+    vs.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
+      expect(startIndex).toBe(1);
+      expect(stopIndex).toBe(6);
+      done();
+    });
+
+    scrollTo(vs, 'scrollTop', 51);
+  });
+
+  it('should not update the range of visible items when scroll is within threshold', () => {
+    const vs = document.body.appendChild(virtualScroller);
+    vs.init(items.length, getItemLength);
+
+    const eventHandler = jest.fn();
+    vs.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, eventHandler);
+    scrollTo(vs, 'scrollTop', 49);
+
+    expect(eventHandler).not.toHaveBeenCalled();
+  });
+
+  it('should update the range of visible items when the itemCount property changed', (done) => {
+    const vs = document.body.appendChild(virtualScroller);
+    vs.init(items.length, getItemLength);
+
+    vs.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
       expect(startIndex).toBe(0);
       expect(stopIndex).toBe(2);
       done();
     });
 
-    virtualScroller.itemCount = 3;
+    vs.itemCount = 3;
   });
 
-  it('should re-calculate the range of visible items when the getItemLength property changed ', (done) => {
-    const virtualScroller = document.querySelector('virtual-scroller');
-    virtualScroller.init(items.length, getItemLength);
+  it('should update the range of visible items when the getItemLength property changed', (done) => {
+    const vs = document.body.appendChild(virtualScroller);
+    vs.init(items.length, getItemLength);
 
-    virtualScroller.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
+    vs.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
       expect(startIndex).toBe(0);
       expect(stopIndex).toBe(4);
       done();
     });
 
-    virtualScroller.getItemLength = () => 100;
+    vs.getItemLength = () => 100;
   });
 
-  it('should re-calculate the range of visible items when the offsetVisibleIndex property changed ', (done) => {
+  it('should update the range of visible items when the offsetVisibleIndex property changed', (done) => {
+    const vs = document.body.appendChild(virtualScroller);
     const offsetVisibleIndex = 5;
-    const virtualScroller = document.querySelector('virtual-scroller');
-    virtualScroller.init(items.length, getItemLength);
+    vs.init(items.length, getItemLength);
 
-    virtualScroller.addEventListener(
+    vs.addEventListener(
       VISIBLE_RANGE_CHANGE_EVENT,
       ({ detail: { startIndex, stopIndex, offsetIndex } }) => {
         expect(startIndex).toBe(0);
@@ -122,6 +183,25 @@ describe('virtual-scroller tests', () => {
       }
     );
 
-    virtualScroller.offsetVisibleIndex = offsetVisibleIndex;
+    vs.offsetVisibleIndex = offsetVisibleIndex;
+  });
+
+  it('should update the range of visible items with offsetVisibleIndex', (done) => {
+    const vs = document.body.appendChild(virtualScroller);
+    const offsetVisibleIndex = 5;
+
+    vs.addEventListener(
+      VISIBLE_RANGE_CHANGE_EVENT,
+      ({ detail: { startIndex, stopIndex, offsetIndex } }) => {
+        expect(startIndex).toBe(0);
+        expect(stopIndex).toBe(10);
+        expect(offsetIndex).toBe(offsetVisibleIndex);
+        done();
+      }
+    );
+
+    vs.init(items.length, getItemLength, {
+      offsetVisibleIndex,
+    });
   });
 });
