@@ -369,9 +369,17 @@ export default class VirtualScroller extends HTMLElement {
   }
 
   _handleResize() {
-    this._height = this.clientHeight;
-    this._width = this.clientWidth;
-    this._update();
+    const scrollWindowLength = getScrollWindowLength(
+      this._virtualization,
+      this.clientWidth,
+      this.clientHeight
+    );
+
+    if (scrollWindowLength !== this._scrollWindowLength) {
+      this._height = this.clientHeight;
+      this._width = this.clientWidth;
+      this._update();
+    }
   }
 
   _updateScrollOverflow(startIndex, stopIndex) {
