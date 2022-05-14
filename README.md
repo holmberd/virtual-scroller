@@ -142,6 +142,8 @@ mobile browsers and builds upon standard web platform APIs so that the performan
 capabilities and compatibility of the library get better as the web evolves.
 
 ## Development (TBD)
+See `/dev` for development/testing.
+
 The following commands are available when developing `<virtual-scroller>`:
 
 Command                         | Description
