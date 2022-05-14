@@ -166,14 +166,6 @@ export default class VirtualScroller extends HTMLElement {
     this._enableResizeObserver = Boolean(enable);
   }
 
-  get disableVirtualization() {
-    return this._disableVirtualization;
-  }
-
-  set disableVirtualization(value) {
-    this._disableVirtualization = Boolean(value);
-  }
-
   get virtualization() {
     return this._virtualization;
   }
@@ -216,6 +208,7 @@ export default class VirtualScroller extends HTMLElement {
     offsetVisibleIndex = 0,
     virtualization = Virtualization.VERTICAL,
     enableResizeObserver = false,
+    disableVirtualization = false,
   } = {}) {
     if (!Object.values(Virtualization).includes(virtualization)) {
       throw Error(`Invalid virtualization. Must be one of: ${Object.values(Virtualization)}`);
@@ -226,6 +219,7 @@ export default class VirtualScroller extends HTMLElement {
     this._virtualization = virtualization;
     this._getItemLength = getItemLength;
     this.enableResizeObserver = enableResizeObserver || this.enableResizeObserver;
+    this._disableVirtualization = disableVirtualization;
     this._updateItemsScrollOffsetIndex();
 
     this._initialized = true;
@@ -294,7 +288,7 @@ export default class VirtualScroller extends HTMLElement {
     }
 
     this._setVisibleItemIndexes(startIndex, stopIndex);
-    !this.disableVirtualization && this._updateScrollOverflow(offsetStartIndex, offsetStopIndex);
+    !this._disableVirtualization && this._updateScrollOverflow(offsetStartIndex, offsetStopIndex);
 
     this._lastUpdate.setUpdate(
       offsetStartIndex,
