@@ -1,6 +1,6 @@
 {
   "name": "@holmberd/virtual-scroller",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "A custom web component for efficiently rendering lists with large number of elements",
   "author": "Dag Holmberg (https://github.com/holmberd/)",
   "license": "BSD-3-Clause",
