@@ -5,10 +5,10 @@ while maintaining overall UI performance. The component achives high performance
 that are currently visible in its "viewport" and virtualizes elements not visible outside of it.
 
 The `<virtual-scroller>` component is technology agnostic allowing you to use it with whichever rendering libary
-that you are using for your project, e.g. React, lit, Vue...
+that you are already using in an existing project, e.g. React, lit, Vue...
 
 ## Performance
-`<virtual-scroller>` has great performance as it takes full advantage of browser's capabilities to batch DOM updates to minimize reflow and repaint. It also has a very small footprint to keep your bundles small to optimize for faster page loads.
+`<virtual-scroller>` has **great** performance since it takes full advantage of the browser's ability to batch DOM updates which minimizes reflow and repaint. It also has a very small footprint allowing you to keep your bundles small for faster page loads.
 
 ## Install
 
@@ -96,7 +96,7 @@ virtualScroller.init(items.length, getItemHeight);
 
 ## Methods
 
-#### `init(itemCount: string, getItemLength: function, options: { offsetVisibleIndex = 0 virtualization = 'vertical', enableResizeObserver = false }): void`
+#### `init(itemCount: string, getItemLength: function, options: { offsetVisibleIndex = 0 virtualization = 'vertical', enableResizeObserver = false, disableVirtualization = false }): void`
 Once called the virtual-scroller will calculate the visible range and dispatch a `visible-range-change` event. You can call this multiple times to reset the items scroll index, e.g. to increase item-count when a user scrolls down the list or when the height of an item changes.
 
 Arguments:
@@ -107,6 +107,7 @@ Options:
 - `offsetVisibleIndex: number`: Number of extra items to be rendered before/after the visible range.
 - `virtualization: string`: Determines whether to use `vertical` or `horizontal` virtualization.
 - `enableResizeObserver: boolean`: Set wether to update visible item indexes on element resize.
+- `disableVirtualization: boolean`: Set to disable virtualization, (`visible-range-change` will still be dispatched).
 
 ## Properties
 
@@ -121,9 +122,6 @@ Set the number of extra items to be rendered before/after the visible range.
 
 #### `enableResizeObserver = false`
 Set wether to update visible item indexes on element resize.
-
-#### `disableVirtualization = false`
-Set to disable virtualization, (`visible-range-change` will still be dispatched).
 
 ### `virtualization`
 Get current virtualization mode.
