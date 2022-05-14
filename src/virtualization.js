@@ -113,9 +113,6 @@ export function buildItemsScrollOffsetIndex(itemCount, getItemLength) {
  * @returns {number}
  */
 export function getItemScrollOffset(itemsScrollOffsetIndex, index) {
-  if (!itemsScrollOffsetIndex) {
-    throw Error('Missing required argument: itemsScrollOffsetIndex');
-  }
   return itemsScrollOffsetIndex[index] || 0;
 }
 
