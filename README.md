@@ -27,7 +27,7 @@ yarn add @holmberd/virtual-scroller
 
 ### React
 ```js
-  import VirtualScroller, { Virtualization } from 'virtual-scroller';
+  import VirtualScroller, { Virtualization, VISIBLE_RANGE_CHANGE_EVENT } from 'virtual-scroller';
 
   const getItemHeight = (index) => index % 2 === 0 ? 50 : 100;
   const listItems = Array.from(Array(10000).map((index) => ({
@@ -43,8 +43,8 @@ yarn add @holmberd/virtual-scroller
         return;
       }
 
-      scrollerRef.current.addEventListener('visibleRangeChange', ({ detail }) => {
-        const { startIndex, stopIndex } = detail;
+      scrollerRef.current.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail }) => {
+        const { startIndex, stopIndex, offsetIndex } = detail;
         setItems(listItems.slice(startIndex, stopIndex + 1));
       });
 
@@ -55,7 +55,7 @@ yarn add @holmberd/virtual-scroller
     }, [])
 
   return (
-    <virtual-scroller width='400px' height='400px' ref={scrollerRef}>
+    <virtual-scroller style={{ width: 400, height: 400 }} ref={scrollerRef}>
       {items.map(item => <div key={item.id} style={{ height: item.height }}>{item.id}</div>)}
     </virtual-scroller>
   );
@@ -99,11 +99,11 @@ virtualScroller.init(items.length, getItemHeight);
 #### `init(itemCount: string, getItemLength: function, options: object): void`
 Once called the virtual-scroller will calculate the visible range and dispatch a `visible-range-change` event. You can call this multiple times to reset the items scroll index, e.g. to increase item-count when a user scrolls down the list or when the height of an item changes.
 
-Arguments:
+**Arguments:**
 - `itemCount: number`: The total number of top-level items.
 - `getItemLength(index: number): number`: Function to calculate and return the length(height or width) of each item by index.
 
-Options:
+**Options:**
 - `offsetVisibleIndex = 0: number`: Number of extra items to be rendered before/after the visible range.
 - `virtualization = 'vertical': string`: Determines whether to use `vertical` or `horizontal` virtualization.
 - `enableResizeObserver = false: boolean`: Set wether to update visible item indexes on element resize.
@@ -123,7 +123,7 @@ Set the number of extra items to be rendered before/after the visible range.
 #### `enableResizeObserver = false`
 Set wether to update visible item indexes on element resize.
 
-### `virtualization`
+#### `virtualization`
 Get current virtualization mode.
 
 ## Events
