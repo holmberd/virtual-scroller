@@ -56,10 +56,14 @@ describe('virtual-scroller integration tests', () => {
     expect.assertions(2);
     const vs = document.body.appendChild(virtualScroller);
     vs.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
-      // 50 + 100 + 50 + 100 + 50 + 100 = 450
-      expect(startIndex).toBe(0); // scrollTop = 0
-      expect(stopIndex).toBe(5); // bottomOffset = 50
-      done();
+      try {
+        // 50 + 100 + 50 + 100 + 50 + 100 = 450
+        expect(startIndex).toBe(0); // scrollTop = 0
+        expect(stopIndex).toBe(5); // bottomOffset = 50
+        done();
+      } catch(err) {
+        done(err);
+      }
     });
 
     vs.init(items.length, getItemLength);
@@ -69,10 +73,14 @@ describe('virtual-scroller integration tests', () => {
     expect.assertions(2);
     const vs = document.body.appendChild(virtualScroller);
     vs.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
-      // 50 + 100 + 50 + 100 + 50 + 100 = 450
-      expect(startIndex).toBe(0); // scrollLeftOffset = 0
-      expect(stopIndex).toBe(5);
-      done();
+      try {
+        // 50 + 100 + 50 + 100 + 50 + 100 = 450
+        expect(startIndex).toBe(0); // scrollLeftOffset = 0
+        expect(stopIndex).toBe(5);
+        done();
+      } catch(err) {
+        done(err);
+      }
     });
 
     vs.init(items.length, getItemLength, {
@@ -85,9 +93,13 @@ describe('virtual-scroller integration tests', () => {
     virtualScroller.addEventListener(
       VISIBLE_RANGE_CHANGE_EVENT,
       ({ detail: { startIndex, stopIndex } }) => {
-        expect(startIndex).toBe(0);
-        expect(stopIndex).toBe(5);
-        done();
+        try {
+          expect(startIndex).toBe(0);
+          expect(stopIndex).toBe(5);
+          done();
+        } catch(err) {
+          done(err);
+        }
       }
     );
 
@@ -128,9 +140,13 @@ describe('virtual-scroller integration tests', () => {
     virtualScroller.addEventListener(
       VISIBLE_RANGE_CHANGE_EVENT,
       ({ detail: { startIndex, stopIndex } }) => {
-        expect(startIndex).toBe(0);
-        expect(stopIndex).toBe(0);
-        done();
+        try {
+          expect(startIndex).toBe(0);
+          expect(stopIndex).toBe(0);
+          done();
+        } catch(err) {
+          done(err);
+        }
       }
     );
 
@@ -191,9 +207,13 @@ describe('virtual-scroller integration tests', () => {
     vs.init(items.length, getItemLength);
 
     vs.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
-      expect(startIndex).toBe(1);
-      expect(stopIndex).toBe(6);
-      done();
+      try {
+        expect(startIndex).toBe(1);
+        expect(stopIndex).toBe(6);
+        done();
+      } catch(err) {
+        done(err);
+      }
     });
 
     scrollTo(vs, 'scrollTop', 51);
@@ -215,9 +235,13 @@ describe('virtual-scroller integration tests', () => {
     vs.init(items.length, getItemLength);
 
     vs.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
-      expect(startIndex).toBe(0);
-      expect(stopIndex).toBe(2);
-      done();
+      try {
+        expect(startIndex).toBe(0);
+        expect(stopIndex).toBe(2);
+        done();
+      } catch(err) {
+        done(err);
+      }
     });
 
     vs.itemCount = 3;
@@ -228,9 +252,13 @@ describe('virtual-scroller integration tests', () => {
     vs.init(items.length, getItemLength);
 
     vs.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
-      expect(startIndex).toBe(0);
-      expect(stopIndex).toBe(4);
-      done();
+      try {
+        expect(startIndex).toBe(0);
+        expect(stopIndex).toBe(4);
+        done();
+      } catch(err) {
+        done(err);
+      }
     });
 
     vs.getItemLength = () => 100;
@@ -244,10 +272,14 @@ describe('virtual-scroller integration tests', () => {
     vs.addEventListener(
       VISIBLE_RANGE_CHANGE_EVENT,
       ({ detail: { startIndex, stopIndex, offsetIndex } }) => {
-        expect(startIndex).toBe(0);
-        expect(stopIndex).toBe(10);
-        expect(offsetIndex).toBe(offsetVisibleIndex);
-        done();
+        try {
+          expect(startIndex).toBe(0);
+          expect(stopIndex).toBe(10);
+          expect(offsetIndex).toBe(offsetVisibleIndex);
+          done();
+        } catch(err) {
+          done(err);
+        }
       }
     );
 
@@ -261,10 +293,14 @@ describe('virtual-scroller integration tests', () => {
     vs.addEventListener(
       VISIBLE_RANGE_CHANGE_EVENT,
       ({ detail: { startIndex, stopIndex, offsetIndex } }) => {
-        expect(startIndex).toBe(0);
-        expect(stopIndex).toBe(10);
-        expect(offsetIndex).toBe(offsetVisibleIndex);
-        done();
+        try {
+          expect(startIndex).toBe(0);
+          expect(stopIndex).toBe(10);
+          expect(offsetIndex).toBe(offsetVisibleIndex);
+          done();
+        } catch(err) {
+          done(err);
+        }
       }
     );
 
