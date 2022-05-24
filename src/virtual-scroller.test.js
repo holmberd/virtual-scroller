@@ -102,6 +102,25 @@ describe('virtual-scroller integration tests', () => {
     expect(eventHandler).not.toHaveBeenCalled();
   });
 
+  it('should update the range of visible items when itemCount is zero', (done) => {
+    const vs = document.body.appendChild(virtualScroller);
+
+    virtualScroller.addEventListener(
+      VISIBLE_RANGE_CHANGE_EVENT,
+      ({ detail: { startIndex, stopIndex } }) => {
+        try {
+          expect(startIndex).toBe(0);
+          expect(stopIndex).toBe(0);
+          done();
+        } catch(err) {
+          done(err);
+        }
+      }
+    );
+
+    vs.init(0, getItemLength);
+  });
+
   it('should update the range of visible items when itemCount is changed to zero', (done) => {
     const vs = document.body.appendChild(virtualScroller);
     vs.init(items.length, getItemLength);
@@ -116,6 +135,55 @@ describe('virtual-scroller integration tests', () => {
     );
 
     vs.itemCount = 0;
+  });
+
+  it('should update the range of visible items when getItemLength sum is zero', (done) => {
+    const vs = document.body.appendChild(virtualScroller);
+    vs.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
+      try {
+        expect(startIndex).toBe(0);
+        expect(stopIndex).toBe(0);
+        done();
+      } catch (err) {
+        done(err);
+      }
+    });
+
+    vs.init(items.length, () => 0);
+  });
+
+  it('should update the range of visible items when getItemLength sum is changed to zero', (done) => {
+    const vs = document.body.appendChild(virtualScroller);
+    vs.init(items.length, getItemLength);
+
+    vs.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
+      try {
+        expect(startIndex).toBe(0);
+        expect(stopIndex).toBe(0);
+        done();
+      } catch (err) {
+        done(err);
+      }
+    });
+
+    vs.init(items.length, () => 0);
+  });
+
+  it('should update the range of visible items when getItemLength sum is zero', (done) => {
+    const vs = document.body.appendChild(virtualScroller);
+    vs.init(items.length, getItemLength);
+
+    vs.addEventListener(VISIBLE_RANGE_CHANGE_EVENT, ({ detail: { startIndex, stopIndex } }) => {
+      try {
+        expect(startIndex).toBe(0);
+        expect(stopIndex).toBe(0);
+        done();
+      } catch (err) {
+        done(err);
+      }
+    });
+
+    vs.init(items.length, () => 0);
   });
 
   it('should update the range of visible items when scroll is past threshold', (done) => {

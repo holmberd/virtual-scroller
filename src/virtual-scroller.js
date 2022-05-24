@@ -246,7 +246,8 @@ export default class VirtualScroller extends HTMLElement {
       return;
     }
 
-    if (!this.itemCount) {
+    // Guard against `itemCount` or the sum of `getItemLength` being zero.
+    if (!this.itemCount || !this._itemsScrollOffsetIndex.reduce((a, b) => a + b)) {
       const startIndex = 0;
       const stopIndex = 0;
       this._setVisibleItemIndexes(startIndex, stopIndex);
