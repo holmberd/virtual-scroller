@@ -17,7 +17,7 @@ esbuild
   })
   .catch(() => process.exit(1));
 
-  // Build CJS.
+// Build CJS.
 esbuild
   .build({
     entryPoints: ['src/index.js'],
