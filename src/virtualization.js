@@ -47,46 +47,46 @@ export function getVisibleItems(itemsScrollOffsetIndex, scrollWindowLength, scro
  * @returns {[number, number]} [top, bottom]
  */
 export function getScrollThresholds(
-  itemsScrollIndex,
-  clientLength,
+  itemsScrollOffsetIndex,
+  scrollWindowLength,
   startIndex,
   stopIndex,
   scrollOffset,
   scrollDistance,
 ) {
   const positiveScroll = scrollDistance > 0;
-  const visibleItemsScrollLength = getScrollLength(itemsScrollIndex, startIndex, stopIndex);
+  const visibleItemsScrollLength = getScrollLength(itemsScrollOffsetIndex, startIndex, stopIndex);
 
   // Handles case when in start-position.
   if (!scrollOffset && positiveScroll) {
-    return [0, visibleItemsScrollLength - clientLength];
+    return [0, visibleItemsScrollLength - scrollWindowLength];
   }
 
-  const beforeVisibleItemsScrollLength = getItemScrollOffset(itemsScrollIndex, startIndex - 1);
+  const beforeVisibleItemsScrollLength = getItemScrollOffset(itemsScrollOffsetIndex, startIndex - 1);
 
   // Essentially calculates e.g. `elem.scrollHeight - elem.offsetHeight`
   // since calling either of those API's would trigger browser forced reflow/layout.
   const firstVisibleItemNonVisibleScrollLength = scrollOffset - beforeVisibleItemsScrollLength;
   const lastVisibleItemNonVisibleScrollLength =
-    visibleItemsScrollLength - clientLength - firstVisibleItemNonVisibleScrollLength;
+    visibleItemsScrollLength - scrollWindowLength - firstVisibleItemNonVisibleScrollLength;
 
   // Scrolling up/left.
   if (!positiveScroll) {
     return [
       firstVisibleItemNonVisibleScrollLength,
-      getItemScrollLength(itemsScrollIndex, stopIndex) - lastVisibleItemNonVisibleScrollLength
+      getItemScrollLength(itemsScrollOffsetIndex, stopIndex) - lastVisibleItemNonVisibleScrollLength
     ];
   }
 
   // Scrolling down/right.
   return [
-    getItemScrollLength(itemsScrollIndex, startIndex) - firstVisibleItemNonVisibleScrollLength,
+    getItemScrollLength(itemsScrollOffsetIndex, startIndex) - firstVisibleItemNonVisibleScrollLength,
     lastVisibleItemNonVisibleScrollLength,
   ];
 }
 
-function getItemScrollLength(itemsScrollIndex, index) {
-  return getItemScrollOffset(itemsScrollIndex, index) - getItemScrollOffset(itemsScrollIndex, index - 1);
+function getItemScrollLength(itemsScrollOffsetIndex, index) {
+  return getItemScrollOffset(itemsScrollOffsetIndex, index) - getItemScrollOffset(itemsScrollOffsetIndex, index - 1);
 }
 
 /**
