@@ -17,6 +17,11 @@ export const Virtualization = {
  * @returns {[number, number]} [startIndex, stopIndex]
  */
 export function getVisibleItems(itemsScrollOffsetIndex, scrollWindowLength, scrollOffset) {
+  if (!itemsScrollOffsetIndex.reduce((a, b) => a + b)) {
+    // Items have no length.
+    return [0, 0];
+  }
+
   // Handles the initial case when no scrolling has occured.
   if (!scrollOffset) {
     let startIndex = 0;

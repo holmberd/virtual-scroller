@@ -39,6 +39,17 @@ describe('Virtualization calculations unit tests', () => {
       expect(stopIndex).toBe(0);
     });
 
+    it('should calculate visible items indexes when the sum of itemsScrollOffsetIndex is zero', () => {
+      const scrollOffset = 0;
+      const [startIndex, stopIndex] = getVisibleItems(
+        Array(CLIENT_LENGTH).fill(0),
+        CLIENT_LENGTH,
+        scrollOffset
+      );
+      expect(startIndex).toBe(0);
+      expect(stopIndex).toBe(0);
+    });
+
     it('should calculate visible items indexes when scrollOffset = 0', () => {
       const scrollOffset = 0;
       const [startIndex, stopIndex] = getVisibleItems(itemsScrollOffsetIndex, CLIENT_LENGTH, scrollOffset);
@@ -132,6 +143,13 @@ describe('Virtualization calculations unit tests', () => {
   });
 
   describe('Calculate scroll overflow', () => {
+    it('should calculate scroll overflow when the sum of itemScrollOffsetIndex is zero', () => {
+      const startIndex = 0, stopIndex = 0;
+      const [above, below] = getScrollOverflow(Array(CLIENT_LENGTH).fill(0), startIndex, stopIndex);
+      expect(above).toBe(0);
+      expect(below).toBe(0);
+    });
+
     it('should calculate scroll overflow between indexes: [0, 0]', () => {
       const startIndex = 0, stopIndex = 0;
       const [above, below] = getScrollOverflow(itemsScrollOffsetIndex, startIndex, stopIndex);
