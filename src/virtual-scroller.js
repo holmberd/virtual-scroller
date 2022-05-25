@@ -90,7 +90,6 @@ export default class VirtualScroller extends HTMLElement {
     this._beforeOverflowElement = null;
     this._afterOverflowElement = null;
     this._disableVirtualization = false;
-    this._virtualization = Virtualization.VERTICAL;
     this._initialized = false;
     this._getItemLength = () => 0;
     this._isConnected = false;
@@ -113,7 +112,7 @@ export default class VirtualScroller extends HTMLElement {
   }
 
   get _scrollWindowLength() {
-    return getScrollWindowLength(this._virtualization, this._width, this._height);
+    return getScrollWindowLength(this.virtualization, this._width, this._height);
   }
 
   get getItemLength() {
@@ -174,11 +173,21 @@ export default class VirtualScroller extends HTMLElement {
   }
 
   get virtualization() {
-    return this._virtualization;
+    return this.hasAttribute('virtualization')
+      ? this.getAttribute('virtualization')
+      : Virtualization.VERTICAL;
+  }
+
+  // TODO: Update visible index on change.
+  set virtualization(value) {
+    if (!Object.values(Virtualization).includes(value)) {
+      throw Error(`Invalid virtualization. Must be one of: ${Object.values(Virtualization)}`);
+    }
+    this.setAttribute('virtualization', value);
   }
 
   _getScrollOffset() {
-    return getScrollOffset(this._virtualization, this.scrollLeft, this.scrollTop);
+    return getScrollOffset(this.virtualization, this.scrollLeft, this.scrollTop);
   }
 
   connectedCallback() {
@@ -212,20 +221,16 @@ export default class VirtualScroller extends HTMLElement {
    * @public
    */
   init(itemCount, getItemLength, {
-    offsetVisibleIndex = 0,
-    virtualization = Virtualization.VERTICAL,
-    enableResizeObserver = false,
-    disableVirtualization = false,
+    virtualization = this.virtualization,
+    enableResizeObserver = this.enableResizeObserver,
+    offsetVisibleIndex = this.offsetVisibleIndex,
+    disableVirtualization = this._disableVirtualization,
   } = {}) {
-    if (!Object.values(Virtualization).includes(virtualization)) {
-      throw Error(`Invalid virtualization. Must be one of: ${Object.values(Virtualization)}`);
-    }
-
     this._itemCount = itemCount;
-    this._offsetVisibleIndex = offsetVisibleIndex;
-    this._virtualization = virtualization;
     this._getItemLength = getItemLength;
-    this.enableResizeObserver = enableResizeObserver || this.enableResizeObserver;
+    this._offsetVisibleIndex = offsetVisibleIndex;
+    this.virtualization = virtualization;
+    this.enableResizeObserver = enableResizeObserver;
     this._disableVirtualization = disableVirtualization;
     this._updateItemsScrollOffsetIndex();
 
@@ -372,7 +377,7 @@ export default class VirtualScroller extends HTMLElement {
 
   _handleResize() {
     const scrollWindowLength = getScrollWindowLength(
-      this._virtualization,
+      this.virtualization,
       this.clientWidth,
       this.clientHeight
     );
