@@ -1,3 +1,8 @@
+/**
+ * Module contains functions to perform virtual scrolling calculations.
+ * @module
+ */
+
 export const Virtualization = {
   HORIZONTAL: 'horizontal',
   VERTICAL: 'vertical',
