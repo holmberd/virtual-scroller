@@ -11,8 +11,12 @@ import { debounce } from './utils';
 
 export { Virtualization } from './virtualization';
 export const VISIBLE_RANGE_CHANGE_EVENT = 'visible-range-change';
+
 const RESIZE_OBSERVER_DEBOUNCE_MS = 20;
 
+/**
+ * Represent last visible index update.
+ */
 class LastUpdate {
   constructor(startIndex, stopIndex, offsetIndex, itemsScrollOffsetIndex) {
     this.setUpdate(startIndex, stopIndex, offsetIndex, itemsScrollOffsetIndex);
@@ -63,6 +67,9 @@ template.innerHTML = `
   <div id='after-overflow'></div>
 `;
 
+/**
+ * Represent the VirtualScroller element.
+ */
 export default class VirtualScroller extends HTMLElement {
   constructor() {
     super();
