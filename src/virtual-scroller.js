@@ -48,13 +48,17 @@ const template = document.createElement('template');
 template.innerHTML = `
   <style>
     :host {
-      display: block;
+      display: flex;
+      flex-direction: column;
       position: relative;
       contain: content;
       overflow: auto;
     }
     :host, ::slotted(*) {
       box-sizing: border-box;
+    }
+    :host([virtualization=horizontal]) {
+      flex-direction: row;
     }
     #before-overflow, #after-overflow {
       visibility: hidden !important;
@@ -181,7 +185,7 @@ export default class VirtualScroller extends HTMLElement {
   // TODO: Update visible index on change.
   set virtualization(value) {
     if (!Object.values(Virtualization).includes(value)) {
-      throw Error(`Invalid virtualization. Must be one of: ${Object.values(Virtualization)}`);
+      throw Error(`Invalid virtualization. Must be one of: [vertical, horizontal]`);
     }
     this.setAttribute('virtualization', value);
   }
