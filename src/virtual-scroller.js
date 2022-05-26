@@ -182,7 +182,6 @@ export default class VirtualScroller extends HTMLElement {
       : Virtualization.VERTICAL;
   }
 
-  // TODO: Update visible index on change.
   set virtualization(value) {
     if (!Object.values(Virtualization).includes(value)) {
       throw Error(`Invalid virtualization. Must be one of: [vertical, horizontal]`);
