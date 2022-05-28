@@ -20,6 +20,13 @@ describe('virtual-scroller integration tests', () => {
     element.dispatchEvent(new Event('scroll', { bubbles: true }));
   };
 
+  global.ResizeObserver = jest.fn().mockImplementation(() => ({
+    observe: jest.fn(),
+    unobserve: jest.fn(),
+    disconnect: jest.fn(),
+  }));
+
+
   beforeAll(() => {
     items = Array(1000).fill(true).map((_, index) => ({ id: index }));
   });

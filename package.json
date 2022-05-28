@@ -13,7 +13,7 @@
   ],
   "scripts": {
     "test": "jest --no-cache --coverage",
-    "build": "rm -rf ./dist && node ./esbuild.js && ls -l dist"
+    "build": "npm test && rm -rf ./dist && node ./esbuild.js && ls -l dist"
   },
   "devDependencies": {
     "esbuild": "^0.14.25",
@@ -29,9 +29,6 @@
   },
   "jest": {
     "collectCoverage": false,
-    "setupFiles": [
-      "<rootDir>/setupTests.js"
-    ],
     "transform": {
       "^.+\\.js?$": [
         "esbuild-jest",
