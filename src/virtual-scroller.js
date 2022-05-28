@@ -54,11 +54,14 @@ template.innerHTML = `
       contain: content;
       overflow: auto;
     }
+    :host([virtualization=horizontal]) {
+      flex-direction: row;
+    }
     :host, ::slotted(*) {
       box-sizing: border-box;
     }
-    :host([virtualization=horizontal]) {
-      flex-direction: row;
+    ::slotted(*) {
+      flex-shrink: 0;
     }
     #before-overflow, #after-overflow {
       visibility: hidden !important;
