@@ -12,4 +12,3 @@ export function debounce(callback, wait, leading = true) {
     }, wait);
   };
 }
-
