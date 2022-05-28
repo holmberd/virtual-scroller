@@ -22,6 +22,7 @@ yarn add @holmberd/virtual-scroller
 ```
 
 ## Example Usage
+See [react-virtual-scroller](https://github.com/holmberd/react-virtual-scroller) for React wrapper.
 
 ### React
 ```jsx
