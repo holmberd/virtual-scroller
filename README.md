@@ -1,8 +1,6 @@
 # `<virtual-scroller>`
 
-`<virtual-scroller>` is a web component that provides a way to render large numbers elements in a scrollable list
-while maintaining overall UI performance. The component achives high performance by only rendering elements
-that are currently visible in its "viewport" and virtualizes elements not visible outside of it.
+`<virtual-scroller>` is a web component that provides a way to render a large number of elements in a scrollable list without negatively affecting overall UI performance. The component achives high performance by only rendering elements that are currently visible in its "viewport" and virtualizes elements not visible outside of it.
 
 The `<virtual-scroller>` component is technology agnostic allowing you to use it with whichever rendering libary
 that you are already using in an existing project, e.g. React, lit, Vue...
@@ -26,7 +24,7 @@ yarn add @holmberd/virtual-scroller
 ## Example Usage
 
 ### React
-```js
+```jsx
   import VirtualScroller, { Virtualization, VISIBLE_RANGE_CHANGE_EVENT } from 'virtual-scroller';
 
   const getItemHeight = (index) => index % 2 === 0 ? 50 : 100;
