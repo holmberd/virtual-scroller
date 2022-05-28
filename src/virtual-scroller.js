@@ -197,7 +197,7 @@ export default class VirtualScroller extends HTMLElement {
     if (!this.isConnected) {
       return;
     }
-    // Store client dimensions for future calculations to prevent reflow.
+    // Cache client dimensions for future calculations.
     this._height = this.clientHeight;
     this._width = this.clientWidth;
     this._lastScrollOffset = this._getScrollOffset();
