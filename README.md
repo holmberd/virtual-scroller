@@ -23,7 +23,7 @@ yarn add @holmberd/virtual-scroller
 
 ```
 
-## Usage
+## Example Usage
 
 ### React
 ```js
@@ -62,38 +62,6 @@ yarn add @holmberd/virtual-scroller
 }
 ```
 
-### Lit
-```js
-import VirtualScroller from 'virtual-scroller';
-import { html, render } from 'lit-html';
-import { repeat } from 'lit-html/directives/repeat.js';
-
-const virtualScroller = new VirtualScroller();
-const root = document.querySelector('.root');
-root.appendChild(virtualScroller);
-
-const getItemHeight = (index) => index % 2 === 0 ? 50 : 100;
-
-const items = Array.from(Array(1000).keys()).map((index) => ({
-  id: index,
-  height: getItemHeight(index),
-}));
-
-const itemList = (items) => html`
-  ${repeat(items, (item) => item.id, (item, index) => html`
-    <div style="height:${item.height}px">${item.id}</div>
-  `)}
-`;
-
-virtualScroller.addEventListener('visibleRangeChange', ({ detail }) => {
-  const { startIndex, stopIndex } = detail;
-  const visibleItemList = itemList(items.slice(startIndex, stopIndex + 1));
-  render(visibleItemList, virtualScroller);
-});
-
-virtualScroller.init(items.length, getItemHeight);
-```
-
 ## Methods
 
 #### `init(itemCount: string, getItemLength: function, options: object): void`
@@ -104,10 +72,10 @@ Once called the virtual-scroller will calculate the visible range and dispatch a
 - `getItemLength(index: number): number`: Function to calculate and return the length(height or width) of each item by index.
 
 **Options:**
-- `offsetVisibleIndex = 0: number`: Number of extra items to be rendered before/after the visible range.
-- `virtualization = 'vertical': string`: Determines whether to use `vertical` or `horizontal` virtualization.
-- `enableResizeObserver = false: boolean`: Set wether to update visible item indexes on element resize.
-- `disableVirtualization = false: boolean`: Set to disable virtualization, (`visible-range-change` will still be dispatched).
+- `offsetVisibleIndex = 0`: Number of extra items to be rendered before/after the visible range.
+- `virtualization = 'vertical': Determines whether to use `vertical` or `horizontal` virtualization.
+- `enableResizeObserver = false`: Set wether to update visible item indexes on element resize.
+- `disableVirtualization = false`: Set to disable virtualization, (`visible-range-change` will still be dispatched).
 
 ## Properties
 
@@ -123,17 +91,17 @@ Set the number of extra items to be rendered before/after the visible range.
 #### `enableResizeObserver = false`
 Set wether to update visible item indexes on element resize.
 
-#### `virtualization`
-Get current virtualization mode.
+#### `virtualization = 'vertical'`
+Get/Set current virtualization mode.
 
 ## Events
 
 #### `visible-range-change: CustomEvent`
 Fired when the visible range of item indexes changes.
 ```js
-e.detail.startIndex: number
-e.detail.stopIndex: number
-e.detail.offsetIndex: number
+event.detail.startIndex: number
+event.detail.stopIndex: number
+event.detail.offsetIndex: number
 ```
 
 ## Browser Support
@@ -142,8 +110,6 @@ mobile browsers and builds upon standard web platform APIs so that the performan
 capabilities and compatibility of the library get better as the web evolves.
 
 ## Development (TBD)
-See `/dev` for development/testing.
-
 The following commands are available when developing `<virtual-scroller>`:
 
 Command                         | Description
