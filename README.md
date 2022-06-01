@@ -79,6 +79,9 @@ Once called the virtual-scroller will calculate the visible range and dispatch a
 ### `resetOnIndex(index: number = 0, shouldUpdate: boolean = true): void`
 Rebuilds the items cached scrollOffset index on and after the specified index when called. Useful when the size of an item changes in your list, e.g. expanded/collapsed. By default calling this method will trigger an update, use `shouldUpdate` to override this behaviour.
 
+### `scrollToItem(index: number): void`
+Scrolls to the specified item index when called. (The item aligns to the beginning of the list).
+
 ## Properties
 
 #### `itemCount = 0`

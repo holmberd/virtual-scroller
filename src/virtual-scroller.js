@@ -5,6 +5,7 @@ import {
   getVisibleItems,
   getScrollOverflow,
   getScrollThresholds,
+  getItemScrollOffset,
   buildItemsScrollOffsetIndex,
 } from './virtualization';
 import { debounce } from './utils';
@@ -259,6 +260,18 @@ export default class VirtualScroller extends HTMLElement {
     }
     this._updateItemsScrollOffsetIndex(index);
     shouldUpdate && this._update();
+  }
+
+  /**
+   * @public
+   */
+  scrollToItem(index) {
+    const itemScrollOffset = getItemScrollOffset(this._itemsScrollOffsetIndex, index - 1);
+    if (Layout.isVertical(this.layout)) {
+      this.scrollTop = itemScrollOffset;
+    } else {
+      this.scrollLeft = itemScrollOffset;
+    }
   }
 
   _updateItemsScrollOffsetIndex(index = 0) {
