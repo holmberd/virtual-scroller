@@ -3,12 +3,12 @@
  * @module
  */
 
-export const Virtualization = {
+export const Layout = {
   HORIZONTAL: 'horizontal',
   VERTICAL: 'vertical',
 
-  isVertical(virtualization) {
-    return Virtualization.VERTICAL === virtualization;
+  isVertical(layout) {
+    return Layout.VERTICAL === layout;
   },
 };
 
@@ -164,12 +164,12 @@ export function validateIndexes(itemCount, startIndex, stopIndex) {
   return true;
 }
 
-export function getScrollWindowLength(virtualization, width, height) {
-  return Virtualization.isVertical(virtualization) ? height : width;
+export function getScrollWindowLength(layout, width, height) {
+  return Layout.isVertical(layout) ? height : width;
 }
 
-export function getScrollOffset(virtualization, scrollLeft, scrollTop) {
-  return Virtualization.isVertical(virtualization) ? scrollTop : scrollLeft;
+export function getScrollOffset(layout, scrollLeft, scrollTop) {
+  return Layout.isVertical(layout) ? scrollTop : scrollLeft;
 }
 
 /**

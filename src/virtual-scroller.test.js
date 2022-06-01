@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import VirtualScroller, { VISIBLE_RANGE_CHANGE_EVENT, Virtualization } from './virtual-scroller';
+import VirtualScroller, { VISIBLE_RANGE_CHANGE_EVENT, Layout } from './virtual-scroller';
 
 describe('virtual-scroller integration tests', () => {
   const VIRTUAL_SCROLLER_HEIGHT = 400;
@@ -91,7 +91,7 @@ describe('virtual-scroller integration tests', () => {
     });
 
     vs.init(items.length, getItemLength, {
-      virtualization: Virtualization.HORIZONTAL
+      layout: Layout.HORIZONTAL
     });
   });
 

@@ -26,7 +26,7 @@ See [react-virtual-scroller](https://github.com/holmberd/react-virtual-scroller)
 
 ### React
 ```jsx
-  import VirtualScroller, { Virtualization, VISIBLE_RANGE_CHANGE_EVENT } from 'virtual-scroller';
+  import VirtualScroller, { Layout, VISIBLE_RANGE_CHANGE_EVENT } from 'virtual-scroller';
 
   const getItemHeight = (index) => index % 2 === 0 ? 50 : 100;
   const listItems = Array.from(Array(10000).map((index) => ({
@@ -49,7 +49,7 @@ See [react-virtual-scroller](https://github.com/holmberd/react-virtual-scroller)
 
       scrollerRef.current.init(listItems.length, getItemHeight, {
         offsetVisibleIndex: 0,
-        virtualization: Virtualization.VERTICAL,
+        layout: Layout.VERTICAL,
       });
     }, [])
 
@@ -72,7 +72,7 @@ Once called the virtual-scroller will calculate the visible range and dispatch a
 
 **Options:**
 - `offsetVisibleIndex = 0`: Number of extra items to be rendered before/after the visible range.
-- `virtualization = 'vertical': Determines whether to use `vertical` or `horizontal` virtualization.
+- `layout = 'vertical'`: Set whether to use `vertical` or `horizontal` layout for virtualization.
 - `enableResizeObserver = false`: Set wether to update visible item indexes on element resize.
 - `disableVirtualization = false`: Set to disable virtualization, (`visible-range-change` will still be dispatched).
 
@@ -90,8 +90,8 @@ Set the number of extra items to be rendered before/after the visible range.
 #### `enableResizeObserver = false`
 Set wether to update visible item indexes on element resize.
 
-#### `virtualization = 'vertical'`
-Get/Set current virtualization mode.
+#### `layout = 'vertical'`
+Get/Set current layout virtualization mode.
 
 ## Events
 

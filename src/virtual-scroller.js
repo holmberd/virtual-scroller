@@ -1,5 +1,5 @@
 import {
-  Virtualization,
+  Layout,
   getScrollWindowLength,
   getScrollOffset,
   getVisibleItems,
@@ -9,7 +9,7 @@ import {
 } from './virtualization';
 import { debounce } from './utils';
 
-export { Virtualization } from './virtualization';
+export { Layout } from './virtualization';
 export const VISIBLE_RANGE_CHANGE_EVENT = 'visible-range-change';
 
 const RESIZE_OBSERVER_DEBOUNCE_MS = 20;
@@ -54,7 +54,7 @@ template.innerHTML = `
       contain: content;
       overflow: auto;
     }
-    :host([virtualization=horizontal]) {
+    :host([layout=horizontal]) {
       flex-direction: row;
     }
     :host, ::slotted(*) {
@@ -119,7 +119,7 @@ export default class VirtualScroller extends HTMLElement {
   }
 
   get _scrollWindowLength() {
-    return getScrollWindowLength(this.virtualization, this._width, this._height);
+    return getScrollWindowLength(this.layout, this._width, this._height);
   }
 
   get getItemLength() {
@@ -179,21 +179,21 @@ export default class VirtualScroller extends HTMLElement {
     this._enableResizeObserver = Boolean(enable);
   }
 
-  get virtualization() {
-    return this.hasAttribute('virtualization')
-      ? this.getAttribute('virtualization')
-      : Virtualization.VERTICAL;
+  get layout() {
+    return this.hasAttribute('layout')
+      ? this.getAttribute('layout')
+      : Layout.VERTICAL;
   }
 
-  set virtualization(value) {
-    if (!Object.values(Virtualization).includes(value)) {
-      throw Error(`Invalid virtualization. Must be one of: [vertical, horizontal]`);
+  set layout(value) {
+    if (!Object.values(Layout).includes(value)) {
+      throw Error(`Invalid layout. Must be one of: [vertical, horizontal]`);
     }
-    this.setAttribute('virtualization', value);
+    this.setAttribute('layout', value);
   }
 
   _getScrollOffset() {
-    return getScrollOffset(this.virtualization, this.scrollLeft, this.scrollTop);
+    return getScrollOffset(this.layout, this.scrollLeft, this.scrollTop);
   }
 
   connectedCallback() {
@@ -227,7 +227,7 @@ export default class VirtualScroller extends HTMLElement {
    * @public
    */
   init(itemCount, getItemLength, {
-    virtualization = this.virtualization,
+    layout = this.layout,
     enableResizeObserver = this.enableResizeObserver,
     offsetVisibleIndex = this.offsetVisibleIndex,
     disableVirtualization = this._disableVirtualization,
@@ -235,7 +235,7 @@ export default class VirtualScroller extends HTMLElement {
     this._itemCount = itemCount;
     this._getItemLength = getItemLength;
     this._offsetVisibleIndex = offsetVisibleIndex;
-    this.virtualization = virtualization;
+    this.layout = layout;
     this.enableResizeObserver = enableResizeObserver;
     this._disableVirtualization = disableVirtualization;
     this._updateItemsScrollOffsetIndex();
@@ -383,7 +383,7 @@ export default class VirtualScroller extends HTMLElement {
 
   _handleResize() {
     const scrollWindowLength = getScrollWindowLength(
-      this.virtualization,
+      this.layout,
       this.clientWidth,
       this.clientHeight
     );
@@ -406,7 +406,7 @@ export default class VirtualScroller extends HTMLElement {
   }
 
   _setScrollOverflow(beforeScrollLength, afterScrollLength) {
-    const dimension = Virtualization.isVertical(this.virtualization) ? 'height' : 'width';
+    const dimension = Layout.isVertical(this.layout) ? 'height' : 'width';
     this._beforeOverflowElement.style[dimension] = `${Math.max(0, beforeScrollLength)}px`;
     this._afterOverflowElement.style[dimension] = `${Math.max(0, afterScrollLength)}px`;
   }
