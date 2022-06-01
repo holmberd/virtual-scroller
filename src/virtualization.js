@@ -101,13 +101,13 @@ function getItemScrollLength(itemsScrollOffsetIndex, index) {
 
 /**
  * Builds and returns an array of scroll-offset for each item index.
- * Each index in the array represent the trailing edge scrolling position for that item.
+ * Each index in the array represent the trailing edge scrolling offset position for the item.
  * @returns {number[]}
  */
-export function buildItemsScrollOffsetIndex(itemCount, getItemLength) {
+export function buildItemsScrollOffsetIndex(itemCount, getItemLength, startIndex = 0) {
   const itemsScrollOffsetIndex = [];
 
-  for (let i = 0; i < itemCount; i++) {
+  for (let i = startIndex; i < itemCount; i++) {
     if (i === 0) {
       itemsScrollOffsetIndex[i] = getItemLength(i);
       continue;

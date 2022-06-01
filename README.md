@@ -76,6 +76,9 @@ Once called the virtual-scroller will calculate the visible range and dispatch a
 - `enableResizeObserver = false`: Set wether to update visible item indexes on element resize.
 - `disableVirtualization = false`: Set to disable virtualization, (`visible-range-change` will still be dispatched).
 
+### `resetOnIndex(index: number = 0, shouldUpdate: boolean = true): void`
+Rebuilds the items cached scrollOffset index on and after the specified index when called. Useful when the size of an item changes in your list, e.g. expanded/collapsed. By default calling this method will trigger an update, use `shouldUpdate` to override this behaviour.
+
 ## Properties
 
 #### `itemCount = 0`

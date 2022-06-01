@@ -249,11 +249,34 @@ export default class VirtualScroller extends HTMLElement {
     this.scrollLeft = 0;
   }
 
-  _updateItemsScrollOffsetIndex() {
-    this._itemsScrollOffsetIndex = buildItemsScrollOffsetIndex(
-      this.itemCount,
-      this.getItemLength,
-    );
+  /**
+   * @public
+   * Rebuilds the items cached scrollOffset index on and after the specified index when called.
+   */
+  resetOnIndex(index = 0, shouldUpdate = true) {
+    if (index < 0) {
+      throw Error('Offset visible index must be >= 0');
+    }
+    this._updateItemsScrollOffsetIndex(index);
+    shouldUpdate && this._update();
+  }
+
+  _updateItemsScrollOffsetIndex(index = 0) {
+    if (index) {
+      const itemsScrollOffsetIndexOnIndex = buildItemsScrollOffsetIndex(
+        this.itemCount,
+        this.getItemLength,
+        index
+      );
+      this._itemsScrollOffsetIndex = this._itemsScrollOffsetIndex
+        .slice(0, index)
+        .concat(itemsScrollOffsetIndexOnIndex);
+    } else {
+      this._itemsScrollOffsetIndex = buildItemsScrollOffsetIndex(
+        this.itemCount,
+        this.getItemLength,
+      );
+    }
   }
 
   /**
