@@ -1,5 +1,5 @@
 export {
   default,
   VISIBLE_RANGE_CHANGE_EVENT,
-  Virtualization,
+  Layout,
 } from './virtual-scroller';
