@@ -14,9 +14,24 @@ export { Layout } from './virtualization';
 export const VISIBLE_RANGE_CHANGE_EVENT = 'visible-range-change';
 
 /**
- * Represent last visible index update.
+ * @typedef {Object} Options
+ * @property {string} layout
+ * @property {boolean} enableResizeObserver
+ * @property {boolean} disableVirtualization
+ * @property {number} offsetVisibleIndex
+ */
+
+/**
+ * Represent last visible index update
  */
 class LastUpdate {
+  /**
+   * @constructor
+   * @param {number} startIndex
+   * @param {number} stopIndex
+   * @param {number} offsetIndex
+   * @param {number[]} itemsScrollOffsetIndex
+   */
   constructor(startIndex, stopIndex, offsetIndex, itemsScrollOffsetIndex) {
     this.setUpdate(startIndex, stopIndex, offsetIndex, itemsScrollOffsetIndex);
   }
@@ -95,7 +110,6 @@ export default class VirtualScroller extends HTMLElement {
   #initialized;
   #getItemLength;
 
-
   constructor() {
     super();
     const shadowRoot = this.attachShadow({ mode: 'open' });
@@ -124,6 +138,9 @@ export default class VirtualScroller extends HTMLElement {
     return this.#clientHeightCache ?? this.clientHeight;
   }
 
+  /**
+   * @param {number} value
+   */
   set #height(value) {
     this.#clientHeightCache = value;
   }
@@ -132,6 +149,9 @@ export default class VirtualScroller extends HTMLElement {
     return this.#clientWidthCache ?? this.clientWidth;
   }
 
+  /**
+   * @param {number} value
+   */
   set #width(value) {
     this.#clientWidthCache = value;
   }
@@ -144,6 +164,9 @@ export default class VirtualScroller extends HTMLElement {
     return this.#getItemLength;
   }
 
+  /**
+   * @param {function} cb
+   */
   set getItemLength(cb) {
     if (cb === this.#getItemLength) {
       return;
@@ -157,6 +180,9 @@ export default class VirtualScroller extends HTMLElement {
     return this.#itemCount;
   }
 
+  /**
+   * @param {number} value
+   */
   set itemCount(value) {
     if (value < 0) {
       throw Error('Item count must be >= 0');
@@ -173,6 +199,9 @@ export default class VirtualScroller extends HTMLElement {
     return this.#offsetVisibleIndex;
   }
 
+  /**
+   * @param {number} value
+   */
   set offsetVisibleIndex(value) {
     if (value < 0) {
       throw Error('Offset visible index must be >= 0');
@@ -188,6 +217,9 @@ export default class VirtualScroller extends HTMLElement {
     return this.#enableResizeObserver;
   }
 
+  /**
+   * @param {boolean} enable
+   */
   set enableResizeObserver(enable) {
     if (enable) {
       this.#connectResizeObserver();
@@ -203,6 +235,9 @@ export default class VirtualScroller extends HTMLElement {
       : Layout.VERTICAL;
   }
 
+  /**
+   * @param {number} value
+   */
   set layout(value) {
     if (!Object.values(Layout).includes(value)) {
       throw Error(`Invalid layout. Must be one of: [vertical, horizontal]`);
@@ -242,7 +277,11 @@ export default class VirtualScroller extends HTMLElement {
   }
 
   /**
+   * Initializes the element virtualization.
    * @public
+   * @param {number} itemCount
+   * @param {function} getItemLength
+   * @param {Options} options
    */
   init(itemCount, getItemLength, {
     layout = this.layout,
@@ -268,8 +307,11 @@ export default class VirtualScroller extends HTMLElement {
   }
 
   /**
-   * @public
    * Rebuilds the items cached scrollOffset index on and after the specified index when called.
+   *
+   * @public
+   * @param {number} index
+   * @param {boolean} shouldUpdate
    */
   resetOnIndex(index = 0, shouldUpdate = true) {
     if (index < 0) {
@@ -280,7 +322,10 @@ export default class VirtualScroller extends HTMLElement {
   }
 
   /**
+   * Scrolls to the specified item index.
+   *
    * @public
+   * @param {number} index
    */
   scrollToItem(index) {
     const itemScrollOffset = getItemScrollOffset(this.#itemsScrollOffsetIndex, index - 1);
@@ -291,6 +336,9 @@ export default class VirtualScroller extends HTMLElement {
     }
   }
 
+  /**
+   * @param {number} index
+   */
   #updateItemsScrollOffsetIndex(index = 0) {
     if (index) {
       const itemsScrollOffsetIndexOnIndex = buildItemsScrollOffsetIndex(
@@ -310,7 +358,11 @@ export default class VirtualScroller extends HTMLElement {
   }
 
   /**
-   * @emits visible-range-change
+   * Updates the visible index.
+   *
+   * @param {number} scrollOffset
+   * @emits VirtualScroller#visible-range-change
+   * @returns
    */
   #update(scrollOffset) {
     if (!this.isConnected || !this.#initialized) {
@@ -381,11 +433,20 @@ export default class VirtualScroller extends HTMLElement {
     );
   }
 
+  /**
+   * @param {number} startIndex
+   * @param {number} stopIndex
+   */
   #setVisibleItemIndexes(startIndex, stopIndex) {
     this.#visibleStartIndex = startIndex;
     this.#visibleStopIndex = stopIndex;
   }
 
+  /**
+   * @param {number} startIndex
+   * @param {number} stopIndex
+   * @returns {[number, number]} offsetItemIndexes
+   */
   #getOffsetItemIndexes(startIndex, stopIndex) {
     const offsetStartIndex = Math.max(0, startIndex - this.offsetVisibleIndex);
     const offsetStopIndex = Math.min(Math.max(0, this.itemCount - 1), stopIndex + this.offsetVisibleIndex);
@@ -448,6 +509,12 @@ export default class VirtualScroller extends HTMLElement {
     }
   }
 
+  /**
+   * Updates and sets the virtualized scroll overflow.
+   *
+   * @param {number} startIndex
+   * @param {number} stopIndex
+   */
   #updateScrollOverflow(startIndex, stopIndex) {
     const [beforeScrollLength, afterScrollLength] = getScrollOverflow(
       this.#itemsScrollOffsetIndex,
@@ -458,6 +525,10 @@ export default class VirtualScroller extends HTMLElement {
     this.#setScrollOverflow(beforeScrollLength, afterScrollLength);
   }
 
+  /**
+   * @param {number} beforeScrollLength
+   * @param {number} afterScrollLength
+   */
   #setScrollOverflow(beforeScrollLength, afterScrollLength) {
     const dimension = Layout.isVertical(this.layout) ? 'height' : 'width';
     this.#beforeOverflowElement.style[dimension] = `${Math.max(0, beforeScrollLength)}px`;

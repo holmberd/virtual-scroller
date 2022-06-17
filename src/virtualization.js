@@ -3,6 +3,10 @@
  * @module
  */
 
+/**
+ * Enum for layout values.
+ * @enum {string}
+ */
 export const Layout = {
   HORIZONTAL: 'horizontal',
   VERTICAL: 'vertical',
@@ -14,6 +18,10 @@ export const Layout = {
 
 /**
  * Calculates and returns the start-/stop-index for items within the element's visible scroll-window.
+ *
+ * @param {number[]} itemsScrollOffsetIndex
+ * @param {number} scrollWindowLength
+ * @param {number} scrollOffset
  * @returns {[number, number]} [startIndex, stopIndex]
  */
 export function getVisibleItems(itemsScrollOffsetIndex, scrollWindowLength, scrollOffset) {
@@ -54,7 +62,14 @@ export function getVisibleItems(itemsScrollOffsetIndex, scrollWindowLength, scro
 /**
  * Calculates and returns thresholds for the scroll distance required to bring
  * items fully inside or outside the element visible/viewport area.
- * @returns {[number, number]} [top, bottom]
+ *
+ * @param {number[]} itemsScrollOffsetIndex
+ * @param {number} scrollWindowLength
+ * @param {number} startIndex
+ * @param {number} stopIndex
+ * @param {number} scrollOffset
+ * @param {number} scrollDistance
+ * @returns {[number, number]} [topThreshold, bottomThreshold]
  */
 export function getScrollThresholds(
   itemsScrollOffsetIndex,
@@ -95,6 +110,12 @@ export function getScrollThresholds(
   ];
 }
 
+/**
+ *
+ * @param {number[]} itemsScrollOffsetIndex
+ * @param {number} index
+ * @returns {number}
+ */
 function getItemScrollLength(itemsScrollOffsetIndex, index) {
   return getItemScrollOffset(itemsScrollOffsetIndex, index) - getItemScrollOffset(itemsScrollOffsetIndex, index - 1);
 }
@@ -102,6 +123,10 @@ function getItemScrollLength(itemsScrollOffsetIndex, index) {
 /**
  * Builds and returns an array of scroll-offset for each item index.
  * Each index in the array represent the trailing edge scrolling offset position for the item.
+ *
+ * @param {number} itemCount
+ * @param {function} getItemLength
+ * @param {number} startIndex
  * @returns {number[]}
  */
 export function buildItemsScrollOffsetIndex(itemCount, getItemLength, startIndex = 0) {
@@ -120,6 +145,9 @@ export function buildItemsScrollOffsetIndex(itemCount, getItemLength, startIndex
 
 /**
  * Returns the scroll offset for the item at the specified index.
+ *
+ * @param {number[]} itemsScrollOffsetIndex
+ * @param {number} index
  * @returns {number}
  */
 export function getItemScrollOffset(itemsScrollOffsetIndex, index) {
@@ -128,6 +156,10 @@ export function getItemScrollOffset(itemsScrollOffsetIndex, index) {
 
 /**
  * Calculates and returns the inclusive scroll length between two indexes.
+ *
+ * @param {number[]} itemsScrollOffsetIndex
+ * @param {number} startIndex
+ * @param {number} stopIndex
  * @returns {number}
  */
 export function getScrollLength(itemsScrollOffsetIndex, startIndex, stopIndex) {
@@ -141,7 +173,11 @@ export function getScrollLength(itemsScrollOffsetIndex, startIndex, stopIndex) {
 
 /**
  * Calculates and returns scroll width/height overflow before and after visible items.
- * @returns {[number, number]} [before, after]
+ *
+ * @param {number[]} itemsScrollOffsetIndex
+ * @param {number} startIndex
+ * @param {number} stopIndex
+ * @returns {[number, number]} [beforeOverflow, afterOverflow]
  */
 export function getScrollOverflow(itemsScrollOffsetIndex, startIndex, stopIndex) {
   const itemCount = itemsScrollOffsetIndex.length;
@@ -154,6 +190,15 @@ export function getScrollOverflow(itemsScrollOffsetIndex, startIndex, stopIndex)
   return [beforeVisibleItemsScrollOffset, afterVisibleItemsScrollOffset];
 }
 
+/**
+ * Helper for validating index ranges.
+ *
+ * @param {number} itemCount
+ * @param {number} startIndex
+ * @param {number} stopIndex
+ * @returns {boolean}
+ * @throws Will throw if argument is invalid.
+ */
 export function validateIndexes(itemCount, startIndex, stopIndex) {
   if (startIndex > stopIndex) {
     throw Error('start index must come before stop index');
@@ -164,10 +209,23 @@ export function validateIndexes(itemCount, startIndex, stopIndex) {
   return true;
 }
 
+/**
+ * @param {Layout} layout
+ * @param {number} width
+ * @param {number} height
+ * @returns {number}
+ */
 export function getScrollWindowLength(layout, width, height) {
   return Layout.isVertical(layout) ? height : width;
 }
 
+/**
+ *
+ * @param {Layout} layout
+ * @param {number} scrollLeft
+ * @param {number} scrollTop
+ * @returns {number}
+ */
 export function getScrollOffset(layout, scrollLeft, scrollTop) {
   return Layout.isVertical(layout) ? scrollTop : scrollLeft;
 }
@@ -175,6 +233,11 @@ export function getScrollOffset(layout, scrollLeft, scrollTop) {
 /**
  * Performs a binary-search on the array by testing
  * each element in the array against the provided function.
+ *
+ * @param {number[]} array
+ * @param {function} callback
+ * @param {number} start
+ * @returns {number}
  */
 function bSearch(array, callback, start = -1) {
   let end = array.length - 1;

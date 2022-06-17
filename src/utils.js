@@ -1,3 +1,16 @@
+/**
+ * Utility functions module.
+ * @module
+ */
+
+/**
+ * Debounces the provided callback within wait interval.
+ *
+ * @param {function} callback
+ * @param {number} wait
+ * @param {boolean} leading
+ * @returns
+ */
 export function debounce(callback, wait, leading = true) {
   let timeoutId = null;
   return (...args) => {
